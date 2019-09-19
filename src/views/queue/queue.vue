@@ -112,7 +112,15 @@ import {
   toggleQueueItemOpen,
 } from '@/state/user'
 import { QueueItem as IQueueItem } from '@/lib/user'
-import { complement, isNotNil, pick, prop, propEq, sortNumber } from '@/utils'
+import {
+  complement,
+  isNil,
+  isNotNil,
+  pick,
+  prop,
+  propEq,
+  sortNumber,
+} from '@/utils'
 
 @Component({
   components: {
@@ -299,8 +307,8 @@ export default class Queue extends Vue {
     this.importFromQuery(pausedQuery, true)
   }
 
-  public exportQueue() {
-    const filePath = resolve(
+  public async exportQueue() {
+    const exportFilePath = resolve(
       this.defaultBackupPath,
       `queue-${getAnilistUsername(this.$store)}-${Date.now()}.json`,
     )
@@ -313,32 +321,29 @@ export default class Queue extends Vue {
       mkdirSync(this.defaultBackupPath)
     }
 
-    const savePath: string | undefined = remote.dialog.showSaveDialog(
-      activeWindow(),
-      {
-        title: 'Export Queue...',
-        buttonLabel: 'Export',
-        defaultPath: filePath,
-        showsTagField: false,
-        filters: [this.jsonFilter],
-      },
-    )
+    const { filePath } = await remote.dialog.showSaveDialog(activeWindow(), {
+      title: 'Export Queue...',
+      buttonLabel: 'Export',
+      defaultPath: exportFilePath,
+      showsTagField: false,
+      filters: [this.jsonFilter],
+    })
 
-    if (!savePath) return
+    if (isNil(filePath)) return
 
-    writeFileSync(savePath, JSON.stringify(data))
+    writeFileSync(filePath, JSON.stringify(data))
 
     sendToast(this.$store, {
       type: 'success',
       title: 'Exported Queue!',
       message: `Click this to see the file!`,
       timeout: 6000,
-      click: () => shell.showItemInFolder(savePath),
+      click: () => shell.showItemInFolder(filePath!),
     })
   }
 
-  public importQueueFromBackup() {
-    const openPaths: string[] | undefined = remote.dialog.showOpenDialog({
+  public async importQueueFromBackup() {
+    const { filePaths } = await remote.dialog.showOpenDialog({
       title: 'Import Backup...',
       buttonLabel: 'Import',
       defaultPath: this.defaultBackupPath,
@@ -346,8 +351,8 @@ export default class Queue extends Vue {
       properties: ['openFile'],
     })
 
-    if (!openPaths || openPaths.length < 1) return
-    const openPath = openPaths[0]
+    if (isNil(filePaths) || length < 1) return
+    const openPath = filePaths[0]
 
     try {
       const data = JSON.parse(readFileSync(openPath).toString())
