@@ -1,6 +1,8 @@
 import { Store } from 'vuex'
 import { DollarApollo } from 'vue-apollo/types/vue-apollo'
-import { Provider } from '@/graphql/types'
+import { Provider } from '@/graphql/generated/types'
+
+export type Maybe<T> = T | null | undefined
 
 export enum SupportedMediaKeys {
   MediaPlayPause = 'PLAYER_PLAY_PAUSE',
@@ -9,17 +11,17 @@ export enum SupportedMediaKeys {
   MediaPreviousTrack = 'PLAYER_PREVIOUS',
 }
 
-export interface Levels {
+export type Levels = {
   [key: string]: number
 }
 
-export interface Stream {
+export type Stream = {
   url: string
   subtitles: [string, string][]
   progress: number
 }
 
-export interface Instance {
+export type Instance = {
   $store: Store<any>
   $apollo: DollarApollo<any>
 }
@@ -49,3 +51,12 @@ export const CrunchyrollProviders = [
 ]
 
 export type SelectItem = { label: string; value: string }
+
+export type GitHubRelease = {
+  id: number
+  tag_name: string
+  name: string
+  body: string
+  html_url: string
+  published_at: string
+}

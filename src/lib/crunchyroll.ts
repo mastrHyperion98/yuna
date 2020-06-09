@@ -1,10 +1,9 @@
-/* eslint-disable class-name */
 import { activeWindow } from 'electron-util'
 import superagent from 'superagent/dist/superagent'
 import { ActionContext, Store } from 'vuex'
-import { oc } from 'ts-optchain'
 
-import { EpisodeListEpisodes, Provider } from '@/graphql/types'
+import missingThumbnail from '@/assets/missing-thumbnail.webp'
+import { EpisodeListEpisodes, Provider } from '@/graphql/generated/types'
 
 import { getConfig } from '@/config'
 import {
@@ -31,17 +30,14 @@ import {
 } from '@/utils'
 import { Stream } from '@/types'
 
-const CR_UNBLOCKER_URL = 'api2.cr-unblocker.com'
 const API_URL = 'api.crunchyroll.com'
 const VERSION = '0'
 const ENGLISH = 'enUS'
-// eslint-disable-next-line variable-name
 const device_type = 'com.crunchyroll.windows.desktop'
 const device_id = getDeviceUuid()
-// eslint-disable-next-line variable-name
 const access_token = getConfig('CRUNCHYROLL_TOKEN')
 
-export interface User {
+export type User = {
   class: 'user'
   user_id: number
   etp_guid: string
@@ -55,7 +51,7 @@ export interface User {
   created: string
 }
 
-export interface _ImageSet {
+export type _ImageSet = {
   thumb_url: string
   small_url: string
   medium_url: string
@@ -69,20 +65,20 @@ export interface _ImageSet {
   height: string
 }
 
-export interface _StreamData {
+export type _StreamData = {
   hardsub_lang: string
   audio_lang: string
   format: 'hls'
   streams: _Stream[]
 }
 
-export interface _Stream {
+export type _Stream = {
   quality: 'adaptive' | 'low' | 'mid' | 'high' | 'ultra'
   expires: string
   url: string
 }
 
-export interface _Media {
+export type _Media = {
   class: string
   media_id: string
   etp_guid: string
@@ -96,7 +92,7 @@ export interface _Media {
   duration: number
   name: string
   description: string
-  screenshot_image: _ImageSet
+  screenshot_image: _ImageSet | null
   bif_url: string
   url: string
   clip: boolean
@@ -114,7 +110,7 @@ export interface _Media {
   playhead: number
 }
 
-interface _Series {
+type _Series = {
   class: 'series'
   media_type: 'anime'
   series_id: string
@@ -127,7 +123,7 @@ interface _Series {
   portrait_image: _ImageSet
 }
 
-interface _Collection {
+type _Collection = {
   availability_notes: string
   class: 'collection'
   media_type: 'anime'
@@ -142,16 +138,16 @@ interface _Collection {
   created: string
 }
 
-interface _Locale {
+type _Locale = {
   locale_id: string
   label: string
 }
 
-export interface _CollectionWithEpisodes extends _Collection {
+export type _CollectionWithEpisodes = {
   episodes: EpisodeListEpisodes[]
-}
+} & _Collection
 
-export interface _SeriesWithCollections {
+export type _SeriesWithCollections = {
   id: number
   seriesId: number
   title: string
@@ -162,7 +158,7 @@ export interface _SeriesWithCollections {
   collections: _CollectionWithEpisodes[]
 }
 
-export interface _AutocompleteResult {
+export type _AutocompleteResult = {
   class: 'series'
   media_type: 'anime'
   series_id: string
@@ -174,24 +170,13 @@ export interface _AutocompleteResult {
   portrait_image: _ImageSet
 }
 
-export interface _QueueEntry {
-  last_watched_media: _Media
-  most_likely_media: _Media
-  ordering: number
-  queue_entry_id: number
-  last_watched_media_playhead: number
-  most_likely_media_playhead: number
-  playhead: number
-  series: _Series
-}
-
-interface CrunchyrollSuccess<D extends object = any> {
+type CrunchyrollSuccess<D extends object = any> = {
   code: 'ok'
   error: false
   data: D
 }
 
-interface CrunchyrollError {
+type CrunchyrollError = {
   code: 'bad_request' | 'bad_session' | 'object_not_found' | 'forbidden'
   error: true
   message: string
@@ -201,13 +186,13 @@ type CrunchyrollResponse<D extends object = any> =
   | RequestSuccess<CrunchyrollSuccess<D>>
   | RequestError<CrunchyrollError>
 
-interface LoginSuccess {
+type LoginSuccess = {
   user: User
   auth: string
   expires: Date
 }
 
-export interface SearchResult {
+export type SearchResult = {
   id: number
   title: string
   description: string
@@ -244,12 +229,12 @@ const responseIsError = (
 let _sessionId: string = userStore.get('crunchyroll.token', '')
 let _locales: _Locale[] = []
 
-export interface SessionResponse {
+export type SessionResponse = {
   session_id: string
   country_code: string
 }
 
-interface StreamInfo {
+type StreamInfo = {
   playhead: number
   stream_data: _StreamData
 }
@@ -267,7 +252,11 @@ export class Crunchyroll {
 
     if (useCRUnblocker) {
       try {
-        data = await Crunchyroll.createUnblockedSession(store, auth)
+        data = await Crunchyroll.createSessionFromUrl(
+          store,
+          `https://cr.yuna.moe/api/passthrough`,
+          auth,
+        )
       } catch (e) {
         if (getIsConnectedTo(store).crunchyroll) {
           store.dispatch(
@@ -282,7 +271,11 @@ export class Crunchyroll {
     }
 
     if (data == null) {
-      data = await Crunchyroll.createNormalSession(store, auth)
+      data = await Crunchyroll.createSessionFromUrl(
+        store,
+        getUrl('start_session'),
+        auth,
+      )
     }
 
     if (getIsConnectedTo(store).crunchyroll) {
@@ -318,14 +311,14 @@ export class Crunchyroll {
     )
     const user = response.body.data.user
 
-    _sessionId = session.session_id
+    _sessionId = session?.session_id ?? ''
     setCrunchyroll(store, {
       user: {
         id: Number(user.user_id),
         name: user.username,
         url: `https://www.crunchyroll.com/user/${user.username}`,
       },
-      token: session.session_id,
+      token: _sessionId,
       refreshToken: response.body.data.auth,
       expires: null,
     })
@@ -476,7 +469,7 @@ export class Crunchyroll {
 
     const episodes = response.body.data
       .filter(isRealEpisode)
-      .map(mediaToEpisode(id)) as any
+      .map(mediaToEpisode(id))
 
     return fixEpisodeNumbers(episodes)
   }
@@ -546,7 +539,9 @@ export class Crunchyroll {
       throw new Error(response.body.message)
     }
 
-    return response.body.data.map(result => ({
+    const data = response.body.data as _AutocompleteResult[]
+
+    return data.map(result => ({
       id: Number(result.series_id),
       title: result.name,
       description: result.description,
@@ -579,12 +574,13 @@ export class Crunchyroll {
       ...query,
     })) as CrunchyrollResponse<B>
 
-  private static createNormalSession = async (
+  private static createSessionFromUrl = async (
     store: StoreType,
+    url: string,
     auth?: string,
   ) => {
     const response = (await superagent
-      .get(getUrl('start_session'))
+      .get(url)
       .query({
         access_token,
         device_type,
@@ -602,32 +598,6 @@ export class Crunchyroll {
 
     userStore.set('crunchyroll.sessionId', _sessionId)
     userStore.set('crunchyroll.country', response.body.data.country_code)
-
-    setCrunchyrollCountry(store, response.body.data.country_code)
-
-    return response.body.data
-  }
-
-  private static createUnblockedSession = async (
-    store: StoreType,
-    auth?: string,
-  ) => {
-    const response = (await superagent
-      .get(`https://${CR_UNBLOCKER_URL}/start_session`)
-      .ok(T)
-      .query({
-        auth: auth || userStore.get('crunchyroll.refreshToken', null),
-        version: '1.1',
-        user_id: userStore.get('crunchyroll.user.id', null),
-      })) as CrunchyrollResponse<SessionResponse>
-
-    if (responseIsError(response)) {
-      return Promise.reject(response.body.message)
-    }
-
-    _sessionId = response.body.data.session_id
-
-    userStore.set('crunchyroll.sessionId', _sessionId)
 
     setCrunchyrollCountry(store, response.body.data.country_code)
 
@@ -701,7 +671,7 @@ const mediaToEpisode = (id: number) => (
   duration,
   url,
   subtitles: [],
-  thumbnail: screenshot_image.full_url,
+  thumbnail: screenshot_image?.full_url ?? missingThumbnail,
 })
 
 const notNumberRegex = /[^\d.]/g
@@ -716,7 +686,7 @@ const getEpisodeNumber = (num: string | number) => {
 }
 
 const fixEpisodeNumbers = (episodes: EpisodeListEpisodes[]) => {
-  const episodeNumber = oc(episodes)[0].episodeNumber()
+  const episodeNumber = episodes[0]?.episodeNumber
 
   if (isNil(episodeNumber)) {
     return []

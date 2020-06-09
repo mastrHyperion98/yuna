@@ -2,8 +2,8 @@
   <div class="queue-item" :class="{ [`anime-${anime.id}`]: true }">
     <div
       v-if="listEntry != null"
-      class="status"
       v-tooltip.right="capitalize(status)"
+      class="status"
     >
       <transition name="fade" mode="out-in">
         <icon v-if="iconForStatus" :icon="iconForStatus" />
@@ -31,7 +31,7 @@
         :loading="episodesLoading !== 0"
         :open="item.open"
         small
-        scrollToNextEpisode
+        scroll-to-next-episode
       />
     </animated-size>
 
@@ -45,8 +45,8 @@
 
       <source-select
         :anime="anime"
-        :currentProvider="item.provider"
-        :setProvider="setProvider"
+        :current-provider="item.provider"
+        :set-provider="setProvider"
         :highlight="highlightSourceSelector"
       />
 
@@ -54,7 +54,7 @@
 
       <next-episode-info
         v-if="anime.nextAiringEpisode"
-        :nextAiringEpisode="anime.nextAiringEpisode"
+        :next-airing-episode="anime.nextAiringEpisode"
       />
 
       <div class="buttons">
@@ -128,7 +128,6 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-import { oc } from 'ts-optchain'
 import { mdiChevronDown, mdiMenu, mdiPencil } from '@mdi/js'
 
 import { EPISODE_LIST } from '@/graphql/documents/queries'
@@ -144,7 +143,7 @@ import {
   MediaListStatus,
   Provider,
   QueueAnime,
-} from '@/graphql/types'
+} from '@/graphql/generated/types'
 
 import NextEpisodeInfo from '@/common/components/next-episode-info.vue'
 import Icon from '@/common/components/icon.vue'
@@ -240,7 +239,7 @@ export default class QueueItem extends Vue {
   public capitalize = capitalize
 
   public get listEntry() {
-    return oc(this.anime).listEntry(null)
+    return this.anime.listEntry ?? null
   }
 
   public get status() {
@@ -278,7 +277,7 @@ export default class QueueItem extends Vue {
   }
 
   public async statusMutation(status: MediaListStatus) {
-    const listEntryId = oc(this.anime).listEntry.id()
+    const listEntryId = this.anime.listEntry?.id
 
     if (isNil(listEntryId)) {
       return sendErrorToast(this.$store, 'No entry found..?')
@@ -301,7 +300,7 @@ export default class QueueItem extends Vue {
         return startRewatching(this, this.anime.id)
       }
 
-      await updateStatus(this, oc(this.anime).id()!, status)
+      await updateStatus(this, this.anime.id, status)
     } catch (err) {
       this.setOpenState(!this.item.open)
     }

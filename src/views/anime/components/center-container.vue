@@ -2,9 +2,9 @@
   <div class="center-container">
     <info
       :id="id"
-      :idMal="idMal"
+      :id-mal="idMal"
       :score="score"
-      :nextAiringEpisode="nextAiringEpisode"
+      :next-airing-episode="nextAiringEpisode"
     />
 
     <description :content="content" :blur="blurDescription" />
@@ -14,7 +14,7 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator'
 
-import { AnimeViewNextAiringEpisode } from '@/graphql/types'
+import { AnimeViewNextAiringEpisode } from '@/graphql/generated/types'
 import { Required } from '@/decorators'
 
 import Icon from '@/common/components/icon.vue'

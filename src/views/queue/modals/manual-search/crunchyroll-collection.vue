@@ -1,5 +1,5 @@
 <template>
-  <div class="collection" v-tooltip="tooltip">
+  <div v-tooltip="tooltip" class="collection">
     <div class="header" @click="toggleItemOpen">
       <icon class="collapser" :class="{ flip: !open }" :icon="expandSvg" />
 
@@ -13,7 +13,7 @@
         :setting="`checked-${collection.collection_id}`"
         :checked="isFullySelected"
         :impossible="isFucked"
-        :onChange="handleCheckChange"
+        :on-change="handleCheckChange"
       />
     </div>
 
@@ -22,9 +22,9 @@
         v-for="episode in collection.episodes"
         :key="episode.key"
         :episode="episode"
-        :selectedEpisode="getSelectedEpisode(episode.id)"
-        :selectEpisodes="selectEpisodes"
-        :unselectEpisodes="unselectEpisodes"
+        :selected-episode="getSelectedEpisode(episode.id)"
+        :select-episodes="selectEpisodes"
+        :unselect-episodes="unselectEpisodes"
       />
     </div>
   </div>
@@ -34,7 +34,7 @@
 import { Component, Vue } from 'vue-property-decorator'
 import { mdiChevronDown } from '@mdi/js'
 
-import { EpisodeListEpisodes } from '@/graphql/types'
+import { EpisodeListEpisodes } from '@/graphql/generated/types'
 import Icon from '@/common/components/icon.vue'
 import Checkbox from '@/common/components/form/checkbox.vue'
 import AnimatedSize from '@/common/components/animated-size.vue'

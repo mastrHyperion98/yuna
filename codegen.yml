@@ -1,8 +1,10 @@
 overwrite: true
 schema:
-  - https://graphql.anilist.co
-  - src/graphql/client-schema.graphqls
-documents: src/**/*.{graphql,ts}
+  - 'https://graphql.anilist.co'
+  - 'src/graphql/client-schema.graphqls'
+documents:
+  - 'src/**/*.{graphql,ts}'
+  - '!**/*.d.ts'
 config:
   avoidOptionals: true
   noNamespaces: true
@@ -10,16 +12,18 @@ hooks:
   afterOneFileWrite:
     - prettier --write
 generates:
-  src/graphql/types.ts:
+  src/graphql/generated/types.ts:
     plugins:
       - add: '/* THIS IS A GENERATED FILE */'
+      - add: '/* eslint-disable */'
       - typescript
       - typescript-operations
       - typescript-compatibility
     config:
       avoidOptionals: true
       strict: true # compatibility only
-  src/graphql/introspection-result.ts:
+  src/graphql/generated/introspection-result.ts:
     plugins:
       - add: '/* THIS IS A GENERATED FILE */'
+      - add: '/* eslint-disable */'
       - fragment-matcher

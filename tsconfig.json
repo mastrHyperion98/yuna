@@ -4,6 +4,7 @@
     "target": "es2018",
     "module": "esnext",
     "strict": true,
+    "skipLibCheck": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "jsx": "preserve",
@@ -14,7 +15,8 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "baseUrl": ".",
-    "types": ["node", "webpack-env"],
+    "resolveJsonModule": true,
+    "types": ["node", "webpack-env", "jest"],
     "paths": {
       "@/*": ["src/*"]
     },
@@ -28,8 +30,7 @@
       "dom",
       "dom.iterable",
       "scripthost"
-    ],
-    "plugins": [{ "transform": "ts-optchain/transform" }]
+    ]
   },
   "include": [
     "src/**/*.ts",

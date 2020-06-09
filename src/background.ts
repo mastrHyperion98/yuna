@@ -22,15 +22,17 @@ import {
 import { destroyDiscord, registerDiscord } from './lib/discord'
 import {
   ANILIST_LOGIN,
+  FFMPEG_RETRY,
   LOGGED_INTO_ANILIST,
   OPEN_DEVTOOLS,
   REGISTER_MEDIA_KEYS,
   UNREGISTER_MEDIA_KEYS,
 } from './messages'
-import { initAutoUpdater } from './updater'
+import { initUpdateChecker } from './updater'
 import { version } from '../package.json'
 import { SupportedMediaKeys } from '@/types'
 import { clamp, debounce, enumKeysToArray } from '@/utils'
+import { downloadBinariesIfNecessary } from '@/lib/ffmpeg/download'
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
 if (isDevelopment) {
@@ -47,12 +49,20 @@ init({
   ignoreErrors: [
     /operation not permitted/,
     /temp-yuna-setup/,
-    /net::ERR/,
+    /.*net::ERR.*/,
     /child "activity" fails/,
     /ENOENT/,
+    /EPERM/,
     /Origin not allowed/,
     /code signature/,
     /connection closed/,
+    /RPC_CONNECTION_TIMEOUT/,
+    /Cannot read property 'write' of null/,
+    /Redirect was cancelled/,
+    /no such file/,
+    /Cannot find latest/,
+    /Cannot parse releases feed/,
+    /The play\(\) request was interrupted/,
   ],
 })
 
@@ -117,6 +127,7 @@ const createMainWindow = () => {
   const window = new BrowserWindow({
     width: defaultSize.width,
     height: defaultSize.height,
+    show: false,
     x: clamp(position.x, bounds.x[0], bounds.x[1] - defaultSize.width),
     y: clamp(position.y, bounds.y[0], bounds.y[1] - defaultSize.height),
     maximizable: false,
@@ -126,7 +137,7 @@ const createMainWindow = () => {
     webPreferences: {
       webSecurity: false,
       allowRunningInsecureContent: false,
-      nodeIntegration: true,
+      nodeIntegration: !!process.env.ELECTRON_NODE_INTEGRATION,
     },
   })
 
@@ -169,7 +180,7 @@ const createMainWindow = () => {
           type: 'normal',
           label: 'Select All',
           accelerator: 'CmdOrCtrl+A',
-          role: 'selectall',
+          role: 'selectAll',
         },
       ],
     },
@@ -184,7 +195,7 @@ const createMainWindow = () => {
         { role: 'services' },
         { type: 'separator' },
         { role: 'hide' },
-        { role: 'hideothers' },
+        { role: 'hideOthers' },
         { role: 'unhide' },
         { type: 'separator' },
         { role: 'quit' },
@@ -194,14 +205,19 @@ const createMainWindow = () => {
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
 
-  initAutoUpdater()
+  initUpdateChecker()
 
   registerDiscord()
+
+  if (!process.env.IS_TEST) {
+    if (isDevelopment || process.argv.includes('--devtools')) {
+      window.webContents.openDevTools()
+    }
+  }
 
   if (isDevelopment) {
     // Load the url of the dev server if in development mode
     window.loadURL(process.env.WEBPACK_DEV_SERVER_URL as string)
-    if (!process.env.IS_TEST) window.webContents.openDevTools()
   } else {
     createProtocol('app')
     // Load the index.html when not in development
@@ -217,6 +233,7 @@ const createMainWindow = () => {
   ipcMain.on(OPEN_DEVTOOLS, () => openDevTools())
   ipcMain.on(REGISTER_MEDIA_KEYS, () => registerMediaKeys(window))
   ipcMain.on(UNREGISTER_MEDIA_KEYS, () => unregisterMediaKeys())
+  ipcMain.on(FFMPEG_RETRY, () => downloadBinariesIfNecessary(mainWindow!, true))
 
   const saveWindowLocation = debounce(() => {
     settingsStore.set('window', {
@@ -230,6 +247,14 @@ const createMainWindow = () => {
   window.on('closed', () => {
     mainWindow = null
     unregisterMediaKeys()
+  })
+
+  window.once('ready-to-show', () => {
+    mainWindow!.show()
+
+    if (!settingsStore.get('ffmpegFailed')) {
+      downloadBinariesIfNecessary(mainWindow!)
+    }
   })
 
   window.webContents.on('devtools-opened', () => {
@@ -260,7 +285,6 @@ app.on('activate', () => {
   // on macOS it is common to re-create a window even after all windows have been closed
   if (mainWindow === null) {
     mainWindow = createMainWindow()
-    mainWindow.once('did-finish-load' as any, () => mainWindow!.show)
   }
 })
 
@@ -290,5 +314,4 @@ app.on('ready', async () => {
   })
 
   mainWindow = createMainWindow()
-  mainWindow.once('did-finish-load' as any, () => mainWindow!.show)
 })

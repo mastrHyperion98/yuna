@@ -9,18 +9,18 @@
 
     <div class="control-panel">
       <div
+        v-tooltip.top="'All shows in List'"
         class="switch list"
         :class="{ active: mode === EpisodeFeedMode.LIST }"
-        v-tooltip.top="'All shows in List'"
         @click="updateMode(EpisodeFeedMode.LIST)"
       >
         <icon :icon="listSvg" />
       </div>
 
       <div
+        v-tooltip.top="'Shows in Queue'"
         class="switch queue"
         :class="{ active: mode === EpisodeFeedMode.QUEUE }"
-        v-tooltip.top="'Shows in Queue'"
         @click="updateMode(EpisodeFeedMode.QUEUE)"
       >
         <icon :icon="queueSvg" />
@@ -36,7 +36,7 @@ import { mdiClipboardTextOutline, mdiPlaylistCheck } from '@mdi/js'
 import Icon from '@/common/components/icon.vue'
 import AnimatedList from './animated-list.vue'
 import { EPISODE_FEED_LIST_IDS } from '@/graphql/documents/queries'
-import { EpisodeFeedListIdsQuery } from '@/graphql/types'
+import { EpisodeFeedListIdsQuery } from '@/graphql/generated/types'
 
 import { Query } from '@/decorators'
 import {
@@ -52,7 +52,7 @@ import { prop } from '@/utils'
 export default class EpisodeFeed extends Vue {
   @Query<EpisodeFeed, EpisodeFeedListIdsQuery>({
     query: EPISODE_FEED_LIST_IDS,
-    update: data => data.ListEntries.map(prop('mediaId')),
+    update: data => data.ListEntries?.map(prop('mediaId')) ?? [],
   })
   public listIds!: number[]
 

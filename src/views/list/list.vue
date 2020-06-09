@@ -1,9 +1,9 @@
 <template>
   <div class="list-page">
     <filters
-      @show-filtered="updateFilteredEntryIds"
       :entries="entries"
       :media="media"
+      @show-filtered="updateFilteredEntryIds"
     />
 
     <div class="list-container">
@@ -11,12 +11,12 @@
         v-for="status in lists"
         :key="status"
         :list="getList(status)"
-        :totalLength="getTotalListLength(status)"
+        :total-length="getTotalListLength(status)"
         :status="status"
         :media="media"
         :open="meta[status].open"
         :double="status === 'PLANNING'"
-        :toggleOpen="toggleOpen"
+        :toggle-open="toggleOpen"
       />
     </div>
   </div>
@@ -31,6 +31,7 @@ import ListRow from './components/list-row.vue'
 import ListEntry from './components/list-entry.vue'
 import Filters from './components/filters.vue'
 import { LIST_MEDIA_QUERY, LIST_VIEW_QUERY } from '@/graphql/documents/queries'
+import { fetchAllPages } from '@/graphql/queries'
 import {
   ListMediaQuery,
   ListMediaQueryVariables,
@@ -38,16 +39,17 @@ import {
   ListViewQuery,
   ListViewQueryVariables,
   MediaListStatus,
-} from '@/graphql/types'
+} from '@/graphql/generated/types'
 
 import { Query } from '@/decorators'
-import { isNil, isNotNil, LocalStorageKey, prop, propEq } from '@/utils'
+import { LocalStorageKey } from '@/lib/local-storage'
+import { isNil, isNotNil, prop, propEq } from '@/utils'
 import { ListMedia } from './types'
-import { fetchAllPages } from '@/graphql/queries'
 
 type MetaData = { [key in MediaListStatus]: { open: boolean } }
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
   interface Window {
     cachedMedia: NonNullable<NonNullable<ListMedia[number]>['media']>[] | null
   }
@@ -125,7 +127,7 @@ export default class List extends Vue {
   }
 
   private getLocalStorageKey(status: MediaListStatus) {
-    return `${LocalStorageKey.LIST_OPEN}_${status}`
+    return `${LocalStorageKey.ListOpen}_${status}`
   }
 
   private saveOpenState(status: MediaListStatus) {

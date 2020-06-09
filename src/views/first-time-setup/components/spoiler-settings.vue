@@ -5,10 +5,10 @@
     <h3>
       Anime Info
       <icon
-        :icon="infoSvg"
         v-tooltip.right="
           'These spoilers will stop being<br/>hidden after watching one third<br/>of the season\'s episodes.'
         "
+        :icon="infoSvg"
       />
     </h3>
 
@@ -16,16 +16,16 @@
       setting="spoiler-descriptions"
       text="Descriptions"
       :checked="settings.spoilers.anime.description"
-      :onChange="checked => setSpoiler('anime.description', checked)"
+      :on-change="checked => setSpoiler('anime.description', checked)"
     />
 
     <h3>
       Episode Info
       <icon
-        :icon="infoSvg"
         v-tooltip.right="
           'These spoilers will stop<br/>being hidden after watching<br/>the episode.'
         "
+        :icon="infoSvg"
       />
     </h3>
 
@@ -33,20 +33,20 @@
       setting="spoiler-episode-title"
       text="Titles"
       :checked="settings.spoilers.episode.name"
-      :onChange="checked => setSpoiler('episode.name', checked)"
+      :on-change="checked => setSpoiler('episode.name', checked)"
     />
 
     <checkbox
       setting="spoiler-episode-thumbnail"
       text="Thumbnails"
       :checked="settings.spoilers.episode.thumbnail"
-      :onChange="checked => setSpoiler('episode.thumbnail', checked)"
+      :on-change="checked => setSpoiler('episode.thumbnail', checked)"
     />
 
     <c-button content="Next" :click="finishStep" />
 
     <div class="example">
-      <episode :episode="episodes[0]" :setCurrentEpisode="() => {}" small />
+      <episode :episode="episodes[0]" :set-current-episode="() => {}" small />
       <span class="cover" />
     </div>
   </div>
@@ -61,7 +61,7 @@ import Checkbox from '@/common/components/form/checkbox.vue'
 import CButton from '@/common/components/button.vue'
 import Episode from '@/common/components/episode-list/episode.vue'
 
-import { EpisodeListEpisodes } from '@/graphql/types'
+import { EpisodeListEpisodes } from '@/graphql/generated/types'
 import thumbnailWebp from '@/assets/setup/episode_thumb.webp'
 import { getSettings, setSpoiler } from '@/state/settings'
 

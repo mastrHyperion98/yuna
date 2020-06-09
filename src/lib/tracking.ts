@@ -1,12 +1,12 @@
 import superagent from 'superagent'
-import uuid from 'uuid/v4'
+import { v4 as uuid } from 'uuid'
 
 import { getConfig } from '@/config'
 import { View } from '@/router'
 import { SettingsStore } from '@/state/settings'
 import { isNil, T } from '@/utils'
 
-interface FathomQuery {
+type FathomQuery = {
   /** Page ID? */
   id: string
   /** Site ID */
@@ -62,9 +62,5 @@ export const trackView = async (view: View) => {
     newSession = false
   }
 
-  await superagent
-    .get(URL)
-    .query(query)
-    .ok(T)
-    .retry(5)
+  await superagent.get(URL).query(query).ok(T).retry(5)
 }

@@ -1,11 +1,11 @@
 import Store from 'electron-store'
 
-import { EpisodeListEpisodes, Provider } from '@/graphql/types'
+import { EpisodeListEpisodes, Provider } from '@/graphql/generated/types'
 
 // interface VersionSchema {
 //   __version: number
 // }
-interface EpisodeCacheSchema {
+type EpisodeCacheSchema = {
   [id: string]: {
     nextEpisodeAiringAt: number
     episodes: EpisodeListEpisodes[]

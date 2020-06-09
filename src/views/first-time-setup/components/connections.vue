@@ -37,20 +37,20 @@
     <c-button
       :disabled="!isFinishedConnecting"
       :content="isFinishedConnecting ? 'Next' : 'Connect at least one service!'"
-      :click="this.finishStep"
+      :click="finishStep"
     />
   </div>
 
   <login-cr
     v-else-if="currentWindow === Window.Crunchyroll"
-    :loginCrunchyroll="loginCrunchyroll"
-    :onFinished="goToMainWindow"
+    :login-crunchyroll="loginCrunchyroll"
+    :on-finished="goToMainWindow"
   />
 
   <login-hd
     v-else-if="currentWindow === Window.Hidive"
-    :loginHidive="loginHidive"
-    :onFinished="goToMainWindow"
+    :login-hidive="loginHidive"
+    :on-finished="goToMainWindow"
   />
 </template>
 

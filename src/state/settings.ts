@@ -26,15 +26,15 @@ export enum KeybindingAction {
   FRAME_BACK = 'FRAME_BACK',
 }
 
-interface KeybindingSettings {
+type KeybindingSettings = {
   [key: string]: KeybindingAction[]
 }
 
-interface ExternalPlayerPaths {
+type ExternalPlayerPaths = {
   vlc: string | null
 }
 
-interface SpoilerSettings {
+type SpoilerSettings = {
   anime: {
     description: boolean
   }
@@ -44,7 +44,7 @@ interface SpoilerSettings {
   }
 }
 
-interface DiscordSettings {
+type DiscordSettings = {
   richPresence: boolean
 }
 
@@ -58,7 +58,7 @@ export enum SetupStep {
 
 export const _setupSteps = enumKeysToArray(SetupStep) as SetupStep[]
 
-interface SetupSettings {
+type SetupSettings = {
   finishedSteps: SetupStep[]
 }
 
@@ -67,7 +67,7 @@ export enum EpisodeFeedMode {
   QUEUE = 'QUEUE',
 }
 
-export interface SettingsState {
+export type SettingsState = {
   episodeFeedMode: EpisodeFeedMode
   autoMarkAsPlanning: boolean
   useCRUnblocker: boolean
@@ -83,6 +83,7 @@ export interface SettingsState {
   localFilesFolder: string | null
   mainListPlugin: string | null
   setup: SetupSettings
+  ffmpegFailed: boolean
   window: Electron.Rectangle
 }
 
@@ -170,6 +171,7 @@ const initialState: SettingsState = {
   setup: {
     finishedSteps: migratedSteps,
   },
+  ffmpegFailed: SettingsStore.get('ffmpegFailed', false),
   window: SettingsStore.get('window', {}),
 }
 
@@ -418,6 +420,11 @@ export const settings = {
       state.mainListPlugin = service
       SettingsStore.set('mainListPlugin', service)
     },
+
+    setFfmpegFailed(state: SettingsState, failed: boolean) {
+      state.ffmpegFailed = failed
+      SettingsStore.set('ffmpegFailed', failed)
+    },
   },
 
   actions: {
@@ -474,6 +481,7 @@ export const setDiscordRichPresence = commit(
 export const addFinishedStep = commit(settings.mutations.addFinishedStep)
 export const removeFinishedStep = commit(settings.mutations.removeFinishedStep)
 export const setMainListPlugin = commit(settings.mutations.setMainListPlugin)
+export const setFfmpegFailed = commit(settings.mutations.setFfmpegFailed)
 
 export const updateMainListPlugin = dispatch(
   settings.actions.updateMainListPlugin,

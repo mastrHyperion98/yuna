@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
 declare type UnPromisify<T> = T extends Promise<infer R> ? R : T
 
 declare type PromiseReturnType<T> = T extends (...a: any[]) => Promise<infer R>
@@ -52,6 +53,11 @@ declare module '*.svg' {
   export default Vue
 }
 
+declare module '!url-loader!' {
+  const str: string
+  export default str
+}
+
 declare module '*.webp' {
   const content: string
   export default content
@@ -69,6 +75,7 @@ declare module 'vue-smooth-dnd' {
   export const Draggable: VueConstructor<Vue>
 }
 
+// @ts-ignore
 declare interface Window {
   initialLogin: boolean
 }
@@ -261,52 +268,4 @@ declare module 'v-tooltip' {
   const plugin: PluginObject<{}>
 
   export default plugin
-}
-
-declare module 'anitomyscript' {
-  interface AnitomyElement {
-    readonly anime_season?: string
-    readonly anime_season_prefix?: string
-    readonly anime_title?: string
-    readonly anime_type?: string
-    readonly anime_year?: string
-    readonly audio_term?: string
-    readonly device_compatibility?: string | string[]
-    readonly episode_number?: string
-    readonly episode_number_alt?: string
-    readonly episode_prefix?: string
-    readonly episode_title?: string
-    readonly file_checksum?: string
-    readonly file_extension?: string
-    readonly file_name?: string
-    readonly language?: string
-    readonly other?: string | string[]
-    readonly release_group?: string
-    readonly release_information?: string
-    readonly release_version?: string
-    readonly source?: string
-    readonly subtitles?: string
-    readonly video_resolution?: string
-    readonly video_term?: string
-    readonly volume_number?: string
-    readonly volume_prefix?: string
-  }
-
-  interface AnitomyOptions {
-    allowed_delimiters?: string
-    ignored_strings?: string[]
-    parse_episode_number?: boolean
-    parse_episode_title?: boolean
-    parse_file_extension?: boolean
-    parse_release_group?: boolean
-  }
-
-  const content: {
-    /**
-     * Parses the filenames synchronously.
-     */
-    parse(filename: string, options?: AnitomyOptions): AnitomyElement
-  }
-
-  export = content
 }

@@ -6,7 +6,7 @@
 
     <score
       v-if="showRating && listEntry"
-      :mediaId="listEntry.mediaId"
+      :media-id="listEntry.mediaId"
       :size="38"
     />
 
@@ -27,12 +27,10 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator'
 import { mdiRepeat } from '@mdi/js'
-import { oc } from 'ts-optchain'
-
 import Score from '@/common/components/score.vue'
 import Icon from './icon.vue'
 
-import { AnimeViewListEntry, MediaListStatus } from '@/graphql/types'
+import { AnimeViewListEntry, MediaListStatus } from '@/graphql/generated/types'
 
 import { Required } from '@/decorators'
 import { getIconForStatus, humanizeMediaListStatus } from '@/utils'
@@ -48,11 +46,11 @@ export default class CoverImage extends Vue {
   public repeatSvg = mdiRepeat
 
   public get mediaListStatus(): MediaListStatus | null {
-    return oc(this.listEntry).status() || null
+    return this.listEntry?.status ?? null
   }
 
   public get repeatedTimes(): number {
-    return oc(this.listEntry).rewatched(0)
+    return this.listEntry?.rewatched ?? 0
   }
 
   public get lowercaseStatus() {

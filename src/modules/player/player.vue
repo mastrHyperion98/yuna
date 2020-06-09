@@ -8,11 +8,11 @@
   >
     <transition name="fade">
       <video
+        ref="player"
         preload
         :muted="muted"
         :autoplay="shouldAutoPlay"
         :poster="episode && episode.thumbnail"
-        ref="player"
         :class="{ ended }"
       >
         <track
@@ -41,52 +41,52 @@
       v-if="anime && episode"
       ref="controls"
       :episode="episode"
-      :nextEpisode="nextEpisode"
+      :next-episode="nextEpisode"
       :anime="anime"
-      :listEntry="anime.listEntry"
+      :list-entry="anime.listEntry"
       :loading="loading || loadingVideo"
       :paused="paused"
-      :isPlayerMaximized="isPlayerMaximized"
+      :is-player-maximized="isPlayerMaximized"
       :muted="muted"
       :volume="volume"
       :duration="duration || episode.duration"
-      :progressPercentage="progressPercentage"
-      :progressInSeconds="progressInSeconds"
-      :loadedPercentage="loadedPercentage"
+      :progress-percentage="progressPercentage"
+      :progress-in-seconds="progressInSeconds"
+      :loaded-percentage="loadedPercentage"
       :speed="speed"
       :quality="quality"
       :levels="levels"
       :subtitles="subtitles"
-      :subtitlesIndex="selectedSubtitles"
-      :onSetTime="onSetTime"
-      :onSetVolume="onSetVolume"
-      :onToggleMute="onToggleMute"
-      :onChangeSpeed="onChangeSpeed"
-      :onChangeQuality="onChangeQuality"
-      :onChangeSubtitles="onChangeSubtitles"
+      :subtitles-index="selectedSubtitles"
+      :on-set-time="onSetTime"
+      :on-set-volume="onSetVolume"
+      :on-toggle-mute="onToggleMute"
+      :on-change-speed="onChangeSpeed"
+      :on-change-quality="onChangeQuality"
+      :on-change-subtitles="onChangeSubtitles"
       :play="play"
       :pause="pause"
-      :setProgress="setProgress"
-      :closePlayer="closePlayer"
+      :set-progress="setProgress"
+      :close-player="closePlayer"
     />
 
     <next-episode-overlay
       v-if="ended && nextEpisode"
-      :nextEpisode="nextEpisode"
-      :episodesInAnime="anime && anime.episodes"
+      :next-episode="nextEpisode"
+      :episodes-in-anime="anime && anime.episodes"
       :progress="listEntry && listEntry.progress"
-      :isPlayerMaximized="isPlayerMaximized"
-      :shouldAutoPlay="shouldAutoPlay"
+      :is-player-maximized="isPlayerMaximized"
+      :should-auto-play="shouldAutoPlay"
     />
 
     <end-of-season-overlay
       v-if="ended && !nextEpisode"
-      :listEntry="listEntry"
+      :list-entry="listEntry"
       :sequels="sequels"
-      :episodeNumber="episode.episodeNumber"
-      :episodesInAnime="anime && anime.episodes"
-      :nextAiringEpisode="anime && anime.nextAiringEpisode"
-      :isPlayerMaximized="isPlayerMaximized"
+      :episode-number="episode.episodeNumber"
+      :episodes-in-anime="anime && anime.episodes"
+      :next-airing-episode="anime && anime.nextAiringEpisode"
+      :is-player-maximized="isPlayerMaximized"
     />
   </div>
 </template>
@@ -96,7 +96,6 @@ import { ipcRenderer } from 'electron'
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator'
 import Hls from 'hls.js'
 import { addBreadcrumb } from '@sentry/browser'
-
 import { mdiLoading, mdiPlayCircle } from '@mdi/js'
 
 import {
@@ -105,9 +104,10 @@ import {
   PlayerAnimeAnime,
   PlayerAnimeTitle,
   Provider,
-} from '@/graphql/types'
+} from '@/graphql/generated/types'
 import { Required } from '@/decorators'
 import { Crunchyroll } from '@/lib/crunchyroll'
+import { LocalStorageKey } from '@/lib/local-storage'
 import {
   getIsFullscreen,
   PlayerData,
@@ -135,7 +135,6 @@ import {
   isCrunchyroll,
   isNil,
   lastItem,
-  LocalStorageKey,
 } from '@/utils'
 
 import Icon from '@/common/components/icon.vue'
@@ -167,14 +166,14 @@ export default class Player extends Vue {
   public loaded = false
   public loadingVideo = false
   public paused = true
-  public muted: boolean = localStorage.getItem(LocalStorageKey.MUTED) === 'true'
+  public muted: boolean = localStorage.getItem(LocalStorageKey.Muted) === 'true'
   public volume: number = this.getNumberFromLocalStorage(
-    LocalStorageKey.VOLUME,
+    LocalStorageKey.Volume,
     70,
   )
   public speed: number = 1
   public quality: string =
-    localStorage.getItem(LocalStorageKey.QUALITY) || '1080'
+    localStorage.getItem(LocalStorageKey.Quality) || '1080'
   public duration = 0
   public progressPercentage = 0
   public progressInSeconds = 0
@@ -196,11 +195,11 @@ export default class Player extends Vue {
     return this.subtitles[this.selectedSubtitles]?.[1]
   }
   public selectedSubtitles = this.getNumberFromLocalStorage(
-    LocalStorageKey.SUBTITLE,
+    LocalStorageKey.Subtitle,
     0,
   )
   public onChangeSubtitles(index: number) {
-    localStorage.setItem(LocalStorageKey.SUBTITLE, index.toString())
+    localStorage.setItem(LocalStorageKey.Subtitle, index.toString())
     this.selectedSubtitles = index
   }
 
@@ -431,7 +430,7 @@ export default class Player extends Vue {
       if (this.levels[this.quality] == null) {
         const newQuality = lastItem(Object.keys(this.levels)) as string
 
-        localStorage.setItem(LocalStorageKey.QUALITY, newQuality)
+        localStorage.setItem(LocalStorageKey.Quality, newQuality)
         this.quality = newQuality
       }
 
@@ -548,7 +547,7 @@ export default class Player extends Vue {
     const value = clamp(+Number(element.value).toFixed(2), 0, 200)
 
     this.volume = value
-    localStorage.setItem(LocalStorageKey.VOLUME, value.toString())
+    localStorage.setItem(LocalStorageKey.Volume, value.toString())
 
     this.gainNode.gain.value = value / 100
   }
@@ -556,7 +555,7 @@ export default class Player extends Vue {
   public onToggleMute() {
     this.muted = !this.muted
 
-    localStorage.setItem(LocalStorageKey.MUTED, this.muted.toString())
+    localStorage.setItem(LocalStorageKey.Muted, this.muted.toString())
   }
 
   public onChangeSpeed(e: Event) {
@@ -569,7 +568,7 @@ export default class Player extends Vue {
   public onChangeQuality(quality: string) {
     this.quality = quality
     this.hls.currentLevel = this.levels![quality]
-    localStorage.setItem(LocalStorageKey.QUALITY, quality)
+    localStorage.setItem(LocalStorageKey.Quality, quality)
   }
 
   public onKeyDown(e: KeyboardEvent) {

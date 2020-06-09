@@ -8,8 +8,8 @@
       />
       <div
         v-else
-        class="content"
         key="entry"
+        class="content"
         @mouseenter="onMouseEnter"
         @mouseleave="onMouseLeave"
       >
@@ -17,8 +17,8 @@
           <img
             :src="
               media.media.bannerImage ||
-                media.media.coverImage.extraLarge ||
-                `http://lorempixel.com/325/115/abstract?${entry.id}`
+              media.media.coverImage.extraLarge ||
+              `http://lorempixel.com/325/115/abstract?${entry.id}`
             "
           />
         </router-link>
@@ -27,7 +27,7 @@
           {{ media.media.title.userPreferred }}
         </scrolling-text>
 
-        <actions :anime="media.media" :listEntry="entry" small horizontal />
+        <actions :anime="media.media" :list-entry="entry" small horizontal />
       </div>
     </transition>
   </div>
@@ -39,7 +39,7 @@ import { Component, Prop, Vue } from 'vue-property-decorator'
 import Actions from '@/common/components/actions.vue'
 import Loading from '@/common/components/loading.vue'
 import ScrollingText from '@/common/components/scrolling-text.vue'
-import { ListViewListEntries } from '@/graphql/types'
+import { ListViewListEntries } from '@/graphql/generated/types'
 
 import { Required } from '@/decorators'
 import { ListMedia } from '../types'

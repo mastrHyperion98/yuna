@@ -1,7 +1,6 @@
-import { oc } from 'ts-optchain'
 import { captureException } from '@sentry/browser'
 
-import { EpisodeListEpisodes, Provider } from '@/graphql/types'
+import { EpisodeListEpisodes, Provider } from '@/graphql/generated/types'
 
 import { fetchEpisodesOfSeries } from '@/lib/myanimelist'
 import { getEpisodeRelations } from '@/lib/relations'
@@ -31,8 +30,7 @@ const getEpisodesFromCache = (
   episodes = getSoftCachedEpisodes(cache, id, provider)
 
   if (!episodesExist(episodes)) {
-    const hardCachedEpisodes =
-      oc(EpisodeCache.get(id, provider)).episodes() || null
+    const hardCachedEpisodes = EpisodeCache.get(id, provider)?.episodes || null
 
     if (episodesExist(hardCachedEpisodes)) {
       episodes = hardCachedEpisodes
@@ -121,7 +119,7 @@ const fetchEpisodesFromHidive = async (cache: RealProxy, id: number) => {
   return relations[id]
 }
 
-interface EpisodeVariables {
+type EpisodeVariables = {
   id: number
   provider: Provider
 }

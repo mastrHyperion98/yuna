@@ -12,7 +12,7 @@ import {
   ListViewListEntries,
   ListViewQuery,
   ListViewQueryVariables,
-} from '@/graphql/types'
+} from '@/graphql/generated/types'
 import { Instance } from '@/types'
 import { isNil } from '@/utils'
 
@@ -108,10 +108,7 @@ export const getAnilistIdsFromMalIds = async (
     )
 
   const idsLeft = malIds.filter(
-    id =>
-      !Object.keys(armResults)
-        .map(Number)
-        .includes(id),
+    id => !Object.keys(armResults).map(Number).includes(id),
   )
 
   const responses = await fetchAllPages<

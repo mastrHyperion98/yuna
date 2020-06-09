@@ -1,8 +1,14 @@
 import { ActionContext } from 'vuex'
 import { getStoreAccessors } from 'vuex-typescript'
-import uuid from 'uuid/v4'
+import { v4 as uuid } from 'uuid'
 
-import { ListEntry, Media, MediaListStatus, Provider } from '@/graphql/types'
+import {
+  ListEntry,
+  Media,
+  MediaExternalLink,
+  MediaListStatus,
+  Provider,
+} from '@/graphql/generated/types'
 import { RootState } from '@/state/store'
 import { getDefaultProvider } from '@/state/auth'
 import { QueueItem, userStore } from '@/lib/user'
@@ -17,16 +23,17 @@ const isCurrentlyWatching = (anime: AddToQueueOptions) =>
     anime.listEntry?.status!,
   )
 
-interface SetProviderOptions {
+type SetProviderOptions = {
   id: number
   provider: Provider
 }
 
-type AddToQueueOptions = Pick<Media, 'id' | 'externalLinks'> & {
+type AddToQueueOptions = Pick<Media, 'id'> & {
+  externalLinks: Array<null | Pick<MediaExternalLink, 'site' | 'url'>> | null
   listEntry: Pick<ListEntry, 'status'> | null
 }
 
-export interface UserState {
+export type UserState = {
   deviceUuid: string
   queue: QueueItem[]
 }

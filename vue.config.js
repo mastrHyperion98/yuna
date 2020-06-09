@@ -43,9 +43,17 @@ module.exports = {
       .filename('js/[name].js')
       .chunkFilename('js/[name].js')
 
+    config.resolve.extensions.add('.node')
+
     const svgRules = config.module.rule('svg')
     svgRules.uses.clear()
     svgRules.use('raw-loader').loader('raw-loader')
+
+    config.module
+      .rule('native')
+      .test(/\.node$/)
+      .use('node-loader')
+      .loader('node-loader')
 
     // Define
     config.plugin('define').tap(([args]) => {
@@ -62,7 +70,9 @@ module.exports = {
 
     // Sentry Source Maps
     config.when(
-      process.env.NODE_ENV === 'production' && GIT_TAG != null,
+      process.env.CI &&
+        process.env.NODE_ENV === 'production' &&
+        GIT_TAG != null,
       config => {
         config
           .plugin('sentry')
@@ -81,6 +91,7 @@ module.exports = {
   },
   pluginOptions: {
     electronBuilder: {
+      nodeIntegration: true,
       chainWebpackMainProcess: config => {
         config.resolve.alias.set('@', resolve(__dirname, 'src'))
       },

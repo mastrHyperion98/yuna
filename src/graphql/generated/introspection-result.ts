@@ -1,4 +1,5 @@
 /* THIS IS A GENERATED FILE */
+/* eslint-disable */
 
 export interface IntrospectionResultData {
   __schema: {
@@ -11,10 +12,24 @@ export interface IntrospectionResultData {
     }[]
   }
 }
-
 const result: IntrospectionResultData = {
   __schema: {
     types: [
+      {
+        kind: 'UNION',
+        name: 'ActivityUnion',
+        possibleTypes: [
+          {
+            name: 'TextActivity',
+          },
+          {
+            name: 'ListActivity',
+          },
+          {
+            name: 'MessageActivity',
+          },
+        ],
+      },
       {
         kind: 'UNION',
         name: 'NotificationUnion',
@@ -65,21 +80,29 @@ const result: IntrospectionResultData = {
       },
       {
         kind: 'UNION',
-        name: 'ActivityUnion',
+        name: 'LikeableUnion',
         possibleTypes: [
-          {
-            name: 'TextActivity',
-          },
           {
             name: 'ListActivity',
           },
           {
+            name: 'TextActivity',
+          },
+          {
             name: 'MessageActivity',
+          },
+          {
+            name: 'ActivityReply',
+          },
+          {
+            name: 'Thread',
+          },
+          {
+            name: 'ThreadComment',
           },
         ],
       },
     ],
   },
 }
-
 export default result

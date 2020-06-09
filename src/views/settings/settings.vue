@@ -1,14 +1,14 @@
 <template>
   <div class="container" tabindex="0" @keydown.ctrl.d="openDevTools">
-    <div class="settings" ref="settings">
-      <section class="category" id="general">
+    <div ref="settings" class="settings">
+      <section id="general" class="category">
         <h1>General</h1>
 
         <checkbox
           setting="queue-auto-add-list"
           text="Mark shows as Planning when adding them to the queue."
           :checked="settings.autoMarkAsPlanning"
-          :onChange="checked => setSetting('autoMarkAsPlanning', checked)"
+          :on-change="checked => setSetting('autoMarkAsPlanning', checked)"
         />
 
         <section id="discord">
@@ -18,7 +18,7 @@
             setting="enable-discord-rp"
             text="Enable Discord Rich Presence"
             :checked="settings.discord.richPresence"
-            :onChange="handleDiscordPresenceChange"
+            :on-change="handleDiscordPresenceChange"
           />
         </section>
 
@@ -29,7 +29,7 @@
             setting="use-cr-unblocker"
             text="Try to use the US catalogue."
             :checked="settings.useCRUnblocker"
-            :onChange="handleUnblockerChange"
+            :on-change="handleUnblockerChange"
           />
 
           <div
@@ -50,24 +50,24 @@
           <p>
             Sub Language
             <icon
-              :icon="infoSvg"
               v-tooltip.top="
                 'Changing this may cause some<br/>shows to be unavailable unless<br/>changed back to English (US).'
               "
+              :icon="infoSvg"
             />
           </p>
 
           <dropdown
             :items="localeItems"
             :value="crunchyrollLocale"
-            :onChange="setCrunchyrollLocale"
+            :on-change="setCrunchyrollLocale"
           />
         </section>
 
         <section id="local-files">
           <h3>Local Files</h3>
 
-          <div class="path-container" id="local-files-path">
+          <div id="local-files-path" class="path-container">
             <c-button
               v-if="!localFilesFolder"
               content="Set path"
@@ -81,60 +81,57 @@
             />
 
             <div
-              class="path"
               v-tooltip.top="localFilesFolder"
+              class="path"
               @click="!!localFilesFolder ? setLocalFilesFolder() : null"
             >
               {{ localFilesFolder }}
             </div>
           </div>
 
-          <div class="path-container vlc" id="vlc-path">
-            <icon :icon="vlcSvg" />
+          <div id="vlc-path" class="path-container with-icon">
+            <icon class="vlc" :icon="vlcSvg" />
 
-            <div class="path" v-tooltip.top="vlcPath" @click="setVLCPath()">
+            <div v-tooltip.top="vlcPath" class="path" @click="setVLCPath()">
               <c-button v-if="!vlcPath" content="Set VLC path" />
               <span v-else>{{ vlcPath }}</span>
+            </div>
+          </div>
+
+          <div id="ffmpeg" class="path-container with-icon">
+            <Icon
+              :icon="ffmpegFailed ? crossSvg : checkSvg"
+              class="ffmpeg"
+              :class="{ failed: ffmpegFailed }"
+            />
+
+            <div v-if="ffmpegFailed" class="path" style="direction: ltr;">
+              <c-button content="Retry FFMPEG download" :click="retryFfmpeg" />
+            </div>
+            <div v-else class="item">
+              FFMPEG downloaded.
+
+              <c-button
+                v-tooltip.top="'Re-download'"
+                :icon="resetSvg"
+                style="margin-left: 10px;"
+                :click="retryFfmpeg"
+              />
             </div>
           </div>
         </section>
       </section>
 
-      <section class="category" id="updates">
-        <h1>Updates</h1>
-
-        <c-button
-          v-if="updateIsAvailable"
-          content="Install update!"
-          type="success"
-          :click="downloadUpdate"
-        />
-
-        <checkbox
-          setting="auto-update"
-          text="Automatically update the program."
-          :checked="settings.autoUpdate"
-          :onChange="checked => setSetting('autoUpdate', checked)"
-        />
-
-        <!--<checkbox
-          setting="beta"
-          text="Install pre-releases (beta versions)."
-          :checked="settings.beta"
-          :onChange="checked => setSetting('beta', checked)"
-        />-->
-      </section>
-
-      <section class="category" id="spoilers">
+      <section id="spoilers" class="category">
         <h1>Spoiler Hiding</h1>
 
         <h3>
           Anime Info
           <icon
-            :icon="infoSvg"
             v-tooltip.top="
               'These spoilers will stop being<br/>hidden after watching one third<br/>of the season\'s episodes.'
             "
+            :icon="infoSvg"
           />
         </h3>
 
@@ -142,16 +139,16 @@
           setting="spoiler-descriptions"
           text="Descriptions"
           :checked="settings.spoilers.anime.description"
-          :onChange="checked => setSpoiler('anime.description', checked)"
+          :on-change="checked => setSpoiler('anime.description', checked)"
         />
 
         <h3>
           Episode Info
           <icon
-            :icon="infoSvg"
             v-tooltip.top="
               'These spoilers will stop<br/>being hidden after watching<br/>the episode.'
             "
+            :icon="infoSvg"
           />
         </h3>
 
@@ -159,40 +156,40 @@
           setting="spoiler-episode-title"
           text="Titles"
           :checked="settings.spoilers.episode.name"
-          :onChange="checked => setSpoiler('episode.name', checked)"
+          :on-change="checked => setSpoiler('episode.name', checked)"
         />
 
         <checkbox
           setting="spoiler-episode-thumbnail"
           text="Thumbnails"
           :checked="settings.spoilers.episode.thumbnail"
-          :onChange="checked => setSpoiler('episode.thumbnail', checked)"
+          :on-change="checked => setSpoiler('episode.thumbnail', checked)"
         />
       </section>
 
-      <section class="category" id="player">
+      <section id="player" class="category">
         <h1>Player</h1>
 
         <checkbox
           setting="autoPlay"
           text="AutoPlay next epsiode"
           :checked="settings.autoPlay"
-          :onChange="checked => setSetting('autoPlay', checked)"
+          :on-change="checked => setSetting('autoPlay', checked)"
         />
 
         <checkbox
           setting="autoMarkWatched"
           text="Automatically mark episodes as watched"
           :checked="settings.autoMarkWatched"
-          :onChange="checked => setSetting('autoMarkWatched', checked)"
+          :on-change="checked => setSetting('autoMarkWatched', checked)"
         />
 
-        <section class="category" id="keybindings">
+        <section id="keybindings" class="category">
           <h3>
             Keybindings
             <icon
-              :icon="infoSvg"
               v-tooltip.right="'Click a binding to remove it.'"
+              :icon="infoSvg"
             />
           </h3>
 
@@ -212,8 +209,8 @@
                 v-for="action in keybindingActions"
                 :key="action"
                 :action="action"
-                :unbindKey="unbindKey"
-                :openKeybindModal="openKeybindModal"
+                :unbind-key="unbindKey"
+                :open-keybind-modal="openKeybindModal"
               />
             </div>
           </div>
@@ -228,37 +225,37 @@
         </section>
       </section>
 
-      <section class="category" id="accounts">
+      <section id="accounts" class="category">
         <h1>Accounts</h1>
 
         <h3>List managers</h3>
 
-        <connection type="anilist" :setCurrentWindow="setCurrentWindow" />
+        <connection type="anilist" :set-current-window="setCurrentWindow" />
 
-        <connection type="simkl" :setCurrentWindow="setCurrentWindow" />
+        <connection type="simkl" :set-current-window="setCurrentWindow" />
 
         <p>
           Main list manager
 
           <icon
-            :icon="infoSvg"
             v-tooltip.top="{
               content:
                 'This is the service that will be used to show what status shows are in etc.',
             }"
+            :icon="infoSvg"
           />
         </p>
         <dropdown
           :items="mainListPluginSelectItems"
           :value="mainListPlugin"
-          :onChange="setMainListPlugin"
+          :on-change="setMainListPlugin"
         />
 
         <h3>Streaming services</h3>
 
-        <connection type="crunchyroll" :setCurrentWindow="setCurrentWindow" />
+        <connection type="crunchyroll" :set-current-window="setCurrentWindow" />
 
-        <connection type="hidive" :setCurrentWindow="setCurrentWindow" />
+        <connection type="hidive" :set-current-window="setCurrentWindow" />
       </section>
     </div>
 
@@ -267,22 +264,22 @@
         <div v-if="currentWindow" class="login-window">
           <login-a-l
             v-if="currentWindow === Window.Anilist"
-            :onFinished="() => setCurrentWindow(null)"
+            :on-finished="() => setCurrentWindow(null)"
           />
 
           <login-c-r
             v-if="currentWindow === Window.Crunchyroll"
-            :onFinished="() => setCurrentWindow(null)"
+            :on-finished="() => setCurrentWindow(null)"
           />
 
           <login-h-d
             v-if="currentWindow === Window.Hidive"
-            :onFinished="() => setCurrentWindow(null)"
+            :on-finished="() => setCurrentWindow(null)"
           />
 
           <login-simkl
             v-if="currentWindow === Window.Simkl"
-            :onFinished="() => setCurrentWindow(null)"
+            :on-finished="() => setCurrentWindow(null)"
           />
         </div>
       </transition>
@@ -291,8 +288,8 @@
     <transition name="fade">
       <div
         v-if="actionToBind"
-        class="keybinding-modal"
         ref="keybindModal"
+        class="keybinding-modal"
         tabindex="0"
         @keydown="bindKey"
       >
@@ -313,6 +310,8 @@ import { Component, Vue } from 'vue-property-decorator'
 import { ipcRenderer, shell } from 'electron'
 import { Key } from 'ts-key-enum'
 import {
+  mdiCheckBold,
+  mdiCloseThick,
   mdiDelete,
   mdiInformationOutline,
   mdiRefresh,
@@ -333,7 +332,6 @@ import Connection from './components/connection.vue'
 import Keybinding from './components/keybinding.vue'
 
 import { Crunchyroll } from '@/lib/crunchyroll'
-import { getIsUpdateAvailable } from '@/state/app'
 import {
   getCrunchyrollCountry,
   getIsConnectedTo,
@@ -356,9 +354,9 @@ import {
   SettingsState,
   setVLCPath,
 } from '@/state/settings'
-import { DOWNLOAD_UPDATE, OPEN_DEVTOOLS } from '@/messages'
+import { FFMPEG_RETRY, OPEN_DEVTOOLS } from '@/messages'
 import { capitalize, isNil } from '@/utils'
-import { getFilePath, getFolderPath } from '@/utils/paths'
+import { getFilePath, getFolderPath } from '@/utils/ffmpeg'
 
 enum Window {
   Anilist = 'Anilist',
@@ -390,6 +388,8 @@ export default class Settings extends Vue {
   public removeSvg = mdiDelete
   public resetSvg = mdiUndoVariant
   public vlcSvg = mdiVlc
+  public checkSvg = mdiCheckBold
+  public crossSvg = mdiCloseThick
   public Window = Window
 
   public $refs!: {
@@ -419,10 +419,6 @@ export default class Settings extends Vue {
 
   public get settings(): SettingsState {
     return getSettings(this.$store)
-  }
-
-  public get updateIsAvailable() {
-    return getIsUpdateAvailable(this.$store)
   }
 
   public get isUsingUSSession() {
@@ -466,6 +462,10 @@ export default class Settings extends Vue {
     }))
   }
 
+  public get ffmpegFailed(): boolean {
+    return this.$store.state.settings.ffmpegFailed
+  }
+
   public openDevTools() {
     ipcRenderer.send(OPEN_DEVTOOLS)
   }
@@ -502,8 +502,8 @@ export default class Settings extends Vue {
     await Crunchyroll.createSession(this.$store)
   }
 
-  public setLocalFilesFolder() {
-    const path = getFolderPath({
+  public async setLocalFilesFolder() {
+    const path = await getFolderPath({
       title: 'Set directory for Local Files',
     })
 
@@ -516,8 +516,8 @@ export default class Settings extends Vue {
     setLocalFilesFolder(this.$store, null)
   }
 
-  public setVLCPath() {
-    const path = getFilePath({
+  public async setVLCPath() {
+    const path = await getFilePath({
       title: 'Set directory for Local Files',
       filters: [{ name: 'vlc', extensions: ['exe'] }],
     })
@@ -539,10 +539,6 @@ export default class Settings extends Vue {
 
   public handleDiscordPresenceChange(checked: boolean) {
     setDiscordRichPresence(this.$store, checked)
-  }
-
-  public downloadUpdate() {
-    ipcRenderer.send(DOWNLOAD_UPDATE)
   }
 
   public openKeybindModal(action: KeybindingAction) {
@@ -600,6 +596,10 @@ export default class Settings extends Vue {
       default:
         return action
     }
+  }
+
+  public retryFfmpeg() {
+    ipcRenderer.send(FFMPEG_RETRY)
   }
 }
 </script>
@@ -685,18 +685,37 @@ export default class Settings extends Vue {
         display: flex;
         align-items: center;
 
-        &.vlc {
+        &.with-icon {
           margin-top: 10px;
 
           & > .icon {
             height: 30px;
             width: 30px;
-            fill: $vlc;
+
+            &.vlc {
+              fill: $vlc;
+            }
+
+            &.ffmpeg {
+              fill: $success;
+
+              &.failed {
+                fill: $danger;
+              }
+            }
           }
         }
 
         & > .button {
           flex-shrink: 0;
+        }
+
+        & > .item {
+          display: flex;
+          align-items: center;
+          margin-left: 10px;
+          padding: 5px;
+          max-width: 100%;
         }
 
         & > .path {

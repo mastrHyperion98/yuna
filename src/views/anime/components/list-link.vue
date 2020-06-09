@@ -1,11 +1,11 @@
 <template>
-  <a class="item" :href="link" title="simkl">
+  <a class="item" :href="link" :title="title">
     <span v-if="logo.trim().endsWith('</svg>')" class="logo" v-html="logo" />
     <img v-else class="logo" :src="logo" />
 
     <animated-size>
-      <span v-if="loading" class="rating" key="loading">...</span>
-      <span v-else-if="scoreString != null" class="rating" key="rating">{{
+      <span v-if="loading" key="loading" class="rating">...</span>
+      <span v-else-if="scoreString != null" key="rating" class="rating">{{
         scoreString
       }}</span>
     </animated-size>
@@ -21,6 +21,7 @@ import AnimatedSize from '@/common/components/animated-size.vue'
 })
 export default class ListLink extends Vue {
   @Required(String) public logo!: string
+  @Required(String) public title!: string
   @Default(String, 'hundred') public type!: 'percent' | 'hundred'
   @Prop(Boolean) public loading!: boolean
   @Prop(String) public link!: string | null

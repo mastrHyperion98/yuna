@@ -12,9 +12,9 @@
 
     <span
       v-if="isConnectedTo.crunchyroll"
-      v-html="flag"
-      class="flag"
       v-tooltip.bottom="`Using ${country} Crunchyroll`"
+      class="flag"
+      v-html="flag"
     />
 
     <span class="separator" />
@@ -26,8 +26,8 @@
       </a>
       <span
         v-else-if="rateLimited"
-        class="alert"
         v-tooltip.bottom="'This goes away in about a minute.'"
+        class="alert"
       >
         You've made too many requests too quickly and are being rate limited.
         <icon :icon="infoSvg" />
@@ -35,6 +35,12 @@
     </transition>
 
     <span v-if="!isMac" class="menu-buttons">
+      <icon
+        v-if="downloadUrl != null"
+        class="button padding"
+        :icon="downloadSvg"
+        @click.native="download"
+      />
       <icon class="button" :icon="minimizeSvg" @click.native="minimize" />
       <icon class="close" :icon="closeSvg" @click.native="close" />
     </span>
@@ -48,18 +54,23 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
+import { shell } from 'electron'
 import { activeWindow, is } from 'electron-util'
 import gql from 'graphql-tag'
-import { oc } from 'ts-optchain'
 import {
   mdiChevronLeft,
   mdiChevronRight,
   mdiClose,
+  mdiDownloadOutline,
   mdiInformationOutline,
   mdiMinus,
 } from '@mdi/js'
 
-import { closeAllModals, getAnilistRequestsUntilLimiting } from '@/state/app'
+import {
+  closeAllModals,
+  getAnilistRequestsUntilLimiting,
+  getUpdateUrl,
+} from '@/state/app'
 import { getCrunchyrollCountry, getIsConnectedTo } from '@/state/auth'
 import { Query } from '@/decorators'
 
@@ -84,10 +95,10 @@ export default class TitleBar extends Vue {
       return !this.isConnectedTo.anilist
     },
     update(data) {
-      return oc(data).Viewer.id() != null
+      return data.Viewer?.id != null
     },
     error(err) {
-      return oc(err as any).networkError.statusCode() === 429
+      return (err as any)?.networkError?.statusCode === 429
     },
     pollInterval: 60 * 1000,
   })
@@ -99,6 +110,7 @@ export default class TitleBar extends Vue {
   public forwardSvg = mdiChevronRight
   public infoSvg = mdiInformationOutline
   public minimizeSvg = mdiMinus
+  public downloadSvg = mdiDownloadOutline
   public closeSvg = mdiClose
 
   public get name() {
@@ -132,6 +144,16 @@ export default class TitleBar extends Vue {
 
   public get rateLimited() {
     return getAnilistRequestsUntilLimiting(this.$store) < 1
+  }
+
+  public get downloadUrl() {
+    return getUpdateUrl(this.$store)
+  }
+
+  public download() {
+    if (this.downloadUrl == null) return
+
+    shell.openExternal(this.downloadUrl)
   }
 
   private restrictedViews = [/login/, /first-time-setup/]
@@ -252,8 +274,15 @@ export default class TitleBar extends Vue {
     -webkit-app-region: no-drag;
     transition: background 75ms;
 
-    &.button:hover {
-      background: rgba(150, 150, 200, 0.1);
+    &.button {
+      &.padding {
+        padding: 3px;
+        padding-top: 4px;
+      }
+
+      &:hover {
+        background: rgba(150, 150, 200, 0.1);
+      }
     }
   }
 

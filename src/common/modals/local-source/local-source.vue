@@ -5,25 +5,59 @@
         <div>Selecting Local Folder for</div>
         <div class="title">{{ anime.title.userPreferred }}</div>
         <div>({{ anime.episodes }} episodes)</div>
+
+        <a
+          href="https://github.com/BeeeQueue/yuna/blob/master/docs/local-files.md#my-show-isnt-showing-up--the-episodes-are-numbered-incorrectly"
+          class="help-link"
+        >
+          Is your show not showing up (heh)?
+        </a>
+      </div>
+
+      <div class="folder" :title="selectedFolder">
+        <div class="placeholder" />
+
+        <div class="text">
+          {{ selectedFolder }}
+        </div>
+
+        <c-button
+          v-tooltip.top="
+            !manuallySelected
+              ? 'Manually select folder'
+              : 'Reset to default local folder'
+          "
+          :click="!manuallySelected ? manuallySelectFolder : updateLocalAnime"
+          :icon="!manuallySelected ? folderSvg : resetSvg"
+          class="manually-select"
+        />
       </div>
 
       <animated-size>
-        <div v-if="creatingEpisodes">
+        <div v-if="loadingLocalAnime || creatingEpisodes">
           <loading :size="50" />
-          <div class="creating-info">
+          <div v-if="creatingEpisodes" class="creating-info">
             Extracting thumbnails...
           </div>
         </div>
-        <div v-else class="anime-container">
+
+        <recycle-scroller
+          v-else
+          v-slot="{ item }"
+          class="anime-container"
+          :items="localAnime"
+          :item-size="45"
+          key-field="folderPath"
+        >
           <div
-            v-for="local in localAnime"
-            :key="local.title + local.folderPath"
-            :title="local.folderPath"
-            @click="select(local)"
+            :key="item.title + item.folderPath"
+            :title="item.folderPath"
+            class="anime-item"
+            @click="select(item)"
           >
-            {{ local.title }} ({{ local.episodes }})
+            {{ item.title }} ({{ item.episodes }})
           </div>
-        </div>
+        </recycle-scroller>
       </animated-size>
     </div>
   </modal-base>
@@ -31,8 +65,9 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
+import { RecycleScroller } from 'vue-virtual-scroller'
 import Fuse from 'fuse.js'
-import { oc } from 'ts-optchain'
+import { mdiClose, mdiFolder } from '@mdi/js'
 
 import ModalBase from '@/common/modals/base.vue'
 import Loading from '@/common/components/loading.vue'
@@ -43,18 +78,22 @@ import {
   LocalSourceAnimeQuery,
   LocalSourceAnimeVariables,
   Provider,
-} from '@/graphql/types'
+} from '@/graphql/generated/types'
 
 import { Query } from '@/decorators'
 import {
   getLocalSourceOptions,
   ModalName,
   sendToast,
+  setLocalSourceAnime,
   toggleModal,
 } from '@/state/app'
 import { LocalAnime, LocalFiles } from '@/lib/local-files'
-import { isNil } from '@/utils'
+import { getLocalFilesFolder } from '@/state/settings'
+import CButton from '@/common/components/button.vue'
 import AnimatedSize from '@/common/components/animated-size.vue'
+import { isNil } from '@/utils'
+import { getFolderPath } from '@/utils/ffmpeg'
 
 const combineDuplicatesBasedOnScore = (
   anime: Fuse.FuseResult<LocalAnime>[],
@@ -78,7 +117,9 @@ const combineDuplicatesBasedOnScore = (
   return newArray
 }
 
-@Component({ components: { AnimatedSize, Loading, ModalBase } })
+@Component({
+  components: { CButton, AnimatedSize, Loading, ModalBase, RecycleScroller },
+})
 export default class LocalSourceModal extends Vue {
   public readonly modalName: ModalName = 'localSource'
 
@@ -95,28 +136,56 @@ export default class LocalSourceModal extends Vue {
   })
   public anime!: LocalSourceAnimeQuery['anime']
 
+  public selectedFolder = getLocalFilesFolder(this.$store)
   public localAnime: LocalAnime[] = []
+  public loadingLocalAnime = false
   public creatingEpisodes = false
 
+  public folderSvg = mdiFolder
+  public resetSvg = mdiClose
+
   public get animeId() {
-    return oc(getLocalSourceOptions(this.$store)).anilistId() || null
+    return getLocalSourceOptions(this.$store)?.anilistId || null
   }
 
   public get titles() {
     return {
-      english: oc(this.anime).title.english(''),
-      romaji: oc(this.anime).title.romaji(''),
+      english: this.anime?.title?.english ?? '',
+      romaji: this.anime?.title?.romaji ?? '',
     }
   }
 
+  public folderPathLimit = 50
+  public get shortFolderPath() {
+    if (isNil(this.selectedFolder)) return null
+
+    const { length } = this.selectedFolder
+    if (length < this.folderPathLimit) {
+      return this.selectedFolder
+    }
+
+    return (
+      '...' + this.selectedFolder.slice(length - this.folderPathLimit, length)
+    )
+  }
+
+  public get manuallySelected() {
+    if (isNil(this.selectedFolder)) return false
+
+    return this.selectedFolder !== getLocalFilesFolder(this.$store)
+  }
+
   @Watch('titles')
-  public updateLocalAnime() {
-    this.localAnime = LocalFiles.getLocalAnime()
+  public async updateLocalAnime() {
+    this.selectedFolder = getLocalFilesFolder(this.$store)
+    this.loadingLocalAnime = true
+    this.localAnime = await LocalFiles.getLocalAnime()
+    this.loadingLocalAnime = false
 
     const fuse = new Fuse(this.localAnime, {
       caseSensitive: false,
       keys: ['title'],
-      threshold: 0.85,
+      threshold: 0.75,
       includeScore: true,
     })
 
@@ -135,6 +204,17 @@ export default class LocalSourceModal extends Vue {
       .sort((a, b) => a.score! - b.score!)
       // Map back to the anime
       .map(result => result.item)
+  }
+
+  public async manuallySelectFolder() {
+    const folder = await getFolderPath({
+      title: 'Manually select anime folder...',
+    })
+
+    if (isNil(folder)) return
+
+    this.selectedFolder = folder
+    this.localAnime = await LocalFiles.getAnimeInFolder(folder)
   }
 
   public async select(localAnime: LocalAnime) {
@@ -159,7 +239,7 @@ export default class LocalSourceModal extends Vue {
       })
     }
 
-    const progress = oc(this.anime).listEntry.progress(0)
+    const progress = this.anime?.listEntry?.progress ?? 0
 
     const episodes = files.map<EpisodeListEpisodes>((file, index) => ({
       __typename: 'Episode',
@@ -197,7 +277,7 @@ export default class LocalSourceModal extends Vue {
       timeout: 10_000,
     })
 
-    new Notification(notification.title, { body: notification.message })
+    setLocalSourceAnime(this.$store, null)
   }
 }
 </script>
@@ -210,6 +290,7 @@ export default class LocalSourceModal extends Vue {
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-width: 600px;
   background: $dark;
   border-radius: 5px;
   box-shadow: $shadow;
@@ -217,7 +298,6 @@ export default class LocalSourceModal extends Vue {
 
   & > .header {
     padding: 15px 35px;
-    border-bottom: 2px solid color($dark, 600);
 
     & > .title {
       margin: 15px 0 0;
@@ -228,6 +308,52 @@ export default class LocalSourceModal extends Vue {
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
+    }
+
+    & > .help-link {
+      display: inline-block;
+      margin-top: 15px;
+      font-weight: 700;
+      font-size: 0.85em;
+      text-decoration: none;
+      color: color($highlight, 600);
+      transition: color 0.15s;
+
+      &:hover {
+        color: color($highlight, 800);
+      }
+    }
+  }
+
+  & > .folder {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 600px;
+    border-bottom: 2px solid color($dark, 600);
+    border-top: 2px solid color($dark, 600);
+    padding: 8px 15px;
+    font-weight: 400;
+    font-size: 0.9em;
+    color: gray;
+
+    & > .text {
+      width: 500px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    & > .placeholder {
+      margin-right: auto;
+      height: 30px;
+      width: 30px;
+      flex-shrink: 0;
+    }
+
+    & > .manually-select {
+      margin-left: auto;
     }
   }
 
@@ -248,12 +374,17 @@ export default class LocalSourceModal extends Vue {
   & .anime-container {
     position: relative;
     max-height: 45vh;
-    min-width: 300px;
+    min-width: 600px;
+    width: 100%;
     overflow-y: auto;
     padding: 10px 20px;
 
-    & > div {
-      padding: 8px 15px;
+    & .anime-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 45px;
+      padding: 0 10px;
       margin-bottom: 8px;
       cursor: pointer;
       border-radius: 5px;

@@ -3,9 +3,9 @@ import { MediaRelation } from '../../graphql/types'
   <div class="relations">
     <div
       v-for="prequel in prequels"
+      :key="prequel.id"
       class="relation"
       @click="$router.push(`/anime/${prequel.id}`)"
-      :key="prequel.id"
     >
       <img
         v-if="prequel.bannerImage"
@@ -21,9 +21,9 @@ import { MediaRelation } from '../../graphql/types'
 
     <div
       v-for="sequel in sequels"
+      :key="sequel.id"
       class="relation"
       @click="$router.push(`/anime/${sequel.id}`)"
-      :key="sequel.id"
     >
       <img v-if="sequel.bannerImage" :src="sequel.bannerImage" class="banner" />
 
@@ -39,7 +39,7 @@ import { MediaRelation } from '../../graphql/types'
 import { Component, Vue } from 'vue-property-decorator'
 import { mdiArrowLeftBold, mdiArrowRightBold } from '@mdi/js'
 
-import { AnimeViewRelations } from '@/graphql/types'
+import { AnimeViewRelations } from '@/graphql/generated/types'
 
 import Icon from '@/common/components/icon.vue'
 import { Required } from '@/decorators'

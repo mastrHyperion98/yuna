@@ -13,7 +13,7 @@
             :key="anime.id"
             :anime="anime"
             :item="getItem(anime.id)"
-            :setProvider="setProvider(anime.id)"
+            :set-provider="setProvider(anime.id)"
           />
         </draggable>
       </container>
@@ -37,6 +37,13 @@
       :class="{ small: isPlayerOpen, external: isExternalPlayer }"
     >
       <span class="fill" />
+
+      <a
+        href="https://github.com/BeeeQueue/yuna/blob/master/docs/local-files.md"
+        class="local-files-help"
+      >
+        Want to play local files?
+      </a>
 
       <c-button
         content="Import Watching from List"
@@ -84,7 +91,6 @@ import { activeWindow, api } from 'electron-util'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { resolve } from 'path'
 import indexBy from 'lodash.keyby'
-import { oc } from 'ts-optchain'
 import { mdiClockOutline, mdiPause, mdiPlay, mdiPlaylistRemove } from '@mdi/js'
 
 import CButton from '@/common/components/button.vue'
@@ -107,7 +113,7 @@ import {
   QueueAnime,
   QueueQuery,
   QueueVariables,
-} from '@/graphql/types'
+} from '@/graphql/generated/types'
 
 import { Query } from '@/decorators'
 import { getPlayerData, sendErrorToast, sendToast } from '@/state/app'
@@ -143,11 +149,8 @@ export default class Queue extends Vue {
       }
     },
     update(data) {
-      const items = indexBy(
-        oc(data)
-          .queue.anime([] as QueueAnime[])
-          .filter(isNotNil),
-        anime => anime.id.toString(),
+      const items = indexBy(data.queue?.anime?.filter(isNotNil), anime =>
+        anime.id.toString(),
       )
 
       return this.queue.map(item => items[item.id])
@@ -169,7 +172,7 @@ export default class Queue extends Vue {
   }
 
   public get isExternalPlayer() {
-    return oc(getPlayerData(this.$store)).provider() === Provider.Local
+    return getPlayerData(this.$store)?.provider === Provider.Local
   }
 
   public get queue() {
@@ -220,9 +223,7 @@ export default class Queue extends Vue {
       variables,
     })
 
-    return oc(result)
-      .data.Media.externalLinks([])
-      .filter(isNotNil)
+    return (result.data.Media?.externalLinks ?? []).filter(isNotNil)
   }
 
   public async importFrom(
@@ -345,8 +346,8 @@ export default class Queue extends Vue {
     return this.importFrom(MediaListStatus.Paused, true)
   }
 
-  public exportQueue() {
-    const filePath = resolve(
+  public async exportQueue() {
+    const exportFilePath = resolve(
       this.defaultBackupPath,
       `queue-${getAnilistUsername(this.$store)}-${Date.now()}.json`,
     )
@@ -359,32 +360,29 @@ export default class Queue extends Vue {
       mkdirSync(this.defaultBackupPath)
     }
 
-    const savePath: string | undefined = remote.dialog.showSaveDialog(
-      activeWindow(),
-      {
-        title: 'Export Queue...',
-        buttonLabel: 'Export',
-        defaultPath: filePath,
-        showsTagField: false,
-        filters: [this.jsonFilter],
-      },
-    )
+    const { filePath } = await remote.dialog.showSaveDialog(activeWindow(), {
+      title: 'Export Queue...',
+      buttonLabel: 'Export',
+      defaultPath: exportFilePath,
+      showsTagField: false,
+      filters: [this.jsonFilter],
+    })
 
-    if (!savePath) return
+    if (isNil(filePath)) return
 
-    writeFileSync(savePath, JSON.stringify(data))
+    writeFileSync(filePath, JSON.stringify(data))
 
     sendToast(this.$store, {
       type: 'success',
       title: 'Exported Queue!',
       message: `Click this to see the file!`,
       timeout: 6000,
-      click: () => shell.showItemInFolder(savePath),
+      click: () => shell.showItemInFolder(filePath!),
     })
   }
 
-  public importQueueFromBackup() {
-    const openPaths: string[] | undefined = remote.dialog.showOpenDialog({
+  public async importQueueFromBackup() {
+    const { filePaths } = await remote.dialog.showOpenDialog({
       title: 'Import Backup...',
       buttonLabel: 'Import',
       defaultPath: this.defaultBackupPath,
@@ -392,8 +390,8 @@ export default class Queue extends Vue {
       properties: ['openFile'],
     })
 
-    if (!openPaths || openPaths.length < 1) return
-    const openPath = openPaths[0]
+    if (isNil(filePaths) || length < 1) return
+    const openPath = filePaths[0]
 
     try {
       const data = JSON.parse(readFileSync(openPath).toString())
@@ -480,6 +478,18 @@ export default class Queue extends Vue {
     padding: 20px 25px;
     background: #202130;
     transition: margin-bottom 0.25s;
+
+    & > .local-files-help {
+      margin-bottom: 10px;
+      font-weight: 700;
+      text-decoration: none;
+      color: color($highlightText, 400);
+      transition: color 0.15s;
+
+      &:hover {
+        color: color($highlightText, 600);
+      }
+    }
 
     &.small {
       margin-bottom: 183px;

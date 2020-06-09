@@ -4,8 +4,8 @@
       v-for="link in sources"
       :key="link.url"
       :href="link.url"
-      v-html="getLogo(link.site)"
       class="link"
+      v-html="getLogo(link.site)"
     />
   </div>
 </template>
@@ -13,7 +13,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 
-import { AnimeViewExternalLinks } from '@/graphql/types'
+import { AnimeViewExternalLinks } from '@/graphql/generated/types'
 
 import { Default } from '@/decorators'
 import { StreamingSource } from '@/types'

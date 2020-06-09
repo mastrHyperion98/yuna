@@ -1,5 +1,5 @@
 <template>
-  <label class="dropdown" :class="classes" v-tooltip.bottom="error">
+  <label v-tooltip.bottom="error" class="dropdown" :class="classes">
     <span v-if="label != null">{{ label }}</span>
 
     <select :value="value" @input="handleChange">
@@ -20,7 +20,7 @@ import { Component, Prop, Vue } from 'vue-property-decorator'
 
 import { Required } from '@/decorators'
 
-export interface DropdownItem {
+export type DropdownItem = {
   label: string
   value: string
   disabled?: boolean

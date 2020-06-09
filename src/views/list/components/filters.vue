@@ -19,31 +19,31 @@
 
       <icon
         v-if="isConnectedTo.simkl"
-        :icon="infoSvg"
         v-tooltip.bottom="
           'Some list entries may be missing due to Simkl missing ID matching data.'
         "
+        :icon="infoSvg"
       />
     </div>
 
     <c-select
+      v-model="selectedAiringStatus"
       class="airing-status"
       label="Airing Status"
       :items="airingStatuses"
-      v-model="selectedAiringStatus"
     />
 
     <text-input
       class="search"
       placeholder="Search in List..."
-      :onChange="debouncedSetSearchString"
+      :on-change="debouncedSetSearchString"
     />
 
     <c-select
+      v-model="selectedSource"
       class="sources"
       label="Streaming Source"
       :items="sources"
-      v-model="selectedSource"
     />
 
     <div class="aside loader">
@@ -69,7 +69,7 @@ import Icon from '@/common/components/icon.vue'
 
 import { Default } from '@/decorators'
 import { getAnilistUserId, getIsConnectedTo, getSimklUser } from '@/state/auth'
-import { ListViewListEntries, MediaStatus } from '@/graphql/types'
+import { ListViewListEntries, MediaStatus } from '@/graphql/generated/types'
 import {
   capitalize,
   debounce,
@@ -82,8 +82,6 @@ import {
 } from '@/utils'
 import { ListMedia } from '../types'
 import { SelectItem, StreamingSource } from '@/types'
-import { oc } from 'ts-optchain'
-
 type Media = NonNullable<NonNullable<ListMedia[number]>['media']>
 
 @Component({ components: { Icon, CSelect, Loading, TextInput } })
@@ -152,14 +150,14 @@ export default class Filters extends Vue {
   public filterByTitles(media: Media[]): Media[] {
     if (this.searchString.length < 3) return media
 
-    const fuse = new Fuse<Media>(media, {
+    const fuse = new Fuse(media, {
       caseSensitive: false,
       shouldSort: true,
       keys: ['title.english', 'title.romaji'] as any,
       threshold: 0.35,
     })
 
-    return fuse.search(this.searchString)
+    return fuse.search(this.searchString).map(item => item.item)
   }
 
   // Sources
@@ -177,9 +175,7 @@ export default class Filters extends Vue {
     if (isNil(this.selectedSource)) return media
 
     return media.filter(m => {
-      const links = oc(m)
-        .externalLinks([])
-        .filter(isNotNil)
+      const links = (m.externalLinks ?? []).filter(isNotNil)
       const sources = getStreamingSources(links)
 
       return sources.some(

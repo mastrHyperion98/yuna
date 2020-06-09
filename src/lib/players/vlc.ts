@@ -3,8 +3,6 @@ import { basename } from 'path'
 import * as os from 'os'
 import superagent from 'superagent/dist/superagent'
 import { Store } from 'vuex'
-import { oc } from 'ts-optchain'
-
 import {
   ExternalPlayer,
   ExternalPlayerEvent,
@@ -14,7 +12,7 @@ import { sendToast } from '@/state/app'
 import { SettingsStore } from '@/state/settings'
 import { isNil, isNotNil, NO_OP, RequestSuccess } from '@/utils'
 
-export interface ExternalMetaData {
+export type ExternalMetaData = {
   animeId: number
   title: string
 }
@@ -127,7 +125,7 @@ export class VLC extends ExternalPlayer {
   }
 
   private static getFileName(report: VLCStatusReport) {
-    return oc(report as any).information.category.meta.filename() || null
+    return (report as any)?.information?.category?.meta?.filename ?? null
   }
 
   public static getVLCPath = findVLCPath

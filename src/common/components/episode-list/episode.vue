@@ -16,18 +16,18 @@
     <transition v-if="!empty && listEntry != null" name="fade">
       <c-button
         v-if="!episode.isWatched"
+        v-tooltip.top="buttonTooltip"
         :icon="bookmarkSvg"
         :click="setProgress"
         :disabled="episode.episodeNumber === 0"
-        v-tooltip.top="buttonTooltip"
       />
       <c-button
         v-else
+        v-tooltip.top="buttonTooltip"
         type="danger"
         :icon="unbookmarkSvg"
         :click="setProgress"
         :disabled="episode.episodeNumber === 0"
-        v-tooltip.top="buttonTooltip"
       />
     </transition>
 
@@ -42,7 +42,7 @@ import { Component, Prop, Vue } from 'vue-property-decorator'
 import { mdiBookmark, mdiBookmarkRemove, mdiCheckCircleOutline } from '@mdi/js'
 
 import { setProgress } from '@/graphql/mutations/list-entry'
-import { EpisodeListEpisodes } from '@/graphql/types'
+import { EpisodeListEpisodes } from '@/graphql/generated/types'
 
 import { Required } from '@/decorators'
 import { ListEntry, setCurrentEpisode } from '@/state/app'

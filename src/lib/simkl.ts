@@ -1,13 +1,12 @@
 import { Store } from 'vuex'
 import superagent from 'superagent/dist/superagent'
-import { oc } from 'ts-optchain'
 import { captureException } from '@sentry/browser'
 
 import { getConfig } from '@/config'
 import { isNil, RequestError, RequestSuccess } from '@/utils'
 import { setSimkl } from '@/state/auth'
 import { updateMainListPlugin } from '@/state/settings'
-import { MediaListStatus } from '@/graphql/types'
+import { MediaListStatus } from '@/graphql/generated/types'
 import { userStore } from '@/lib/user'
 
 type SimklListStatus =
@@ -17,7 +16,7 @@ type SimklListStatus =
   | 'hold'
   | 'completed'
 
-interface _Show {
+type _Show = {
   title: string
   year: number
   type: 'anime'
@@ -27,7 +26,7 @@ interface _Show {
   }
 }
 
-interface _ShowFull extends _Show {
+type _ShowFull = {
   ids: {
     simkl: number
     slug: string
@@ -62,16 +61,16 @@ interface _ShowFull extends _Show {
   status: 'ended'
   network: string
   anime_type: 'tv'
-  ratings: {
-    simkl: {
+  ratings?: {
+    simkl?: {
       rating: number
       votes: number
     }
-    imdb: {
+    imdb?: {
       rating: number
       votes: number
     }
-    mal: {
+    mal?: {
       rating: number
       votes: number
       rank: number
@@ -82,9 +81,9 @@ interface _ShowFull extends _Show {
     youtube: string
     size: number
   }>
-}
+} & _Show
 
-interface _OauthCode {
+type _OauthCode = {
   result: string
   device_code: 'DEVICE_CODE'
   user_code: string
@@ -93,17 +92,17 @@ interface _OauthCode {
   interval: number
 }
 
-interface _OauthPinPending {
+type _OauthPinPending = {
   result: 'KO'
   message: string
 }
 
-interface _OauthPinFinished {
+type _OauthPinFinished = {
   result: 'OK'
   access_token: string
 }
 
-interface _UserSettings {
+type _UserSettings = {
   user: {
     name: string
     joined_at: string
@@ -122,7 +121,7 @@ interface _UserSettings {
   }
 }
 
-interface _SyncHistory {
+type _SyncHistory = {
   added: {
     movies: number
     shows: number
@@ -135,13 +134,13 @@ interface _SyncHistory {
   }
 }
 
-interface _SyncAllItems {
+type _SyncAllItems = {
   shows: unknown[]
   movies: unknown[]
   anime: SimklListEntry[]
 }
 
-interface _SyncAddToList {
+type _SyncAddToList = {
   movies?: unknown[]
   shows: Array<{
     to: SimklListStatus
@@ -152,14 +151,14 @@ interface _SyncAddToList {
   }>
 }
 
-interface _SetWatchedBody {
+type _SetWatchedBody = {
   shows: Array<{
     ids: { mal: number }
     episodes: Array<{ number: number }>
   }>
 }
 
-export interface SimklListEntry {
+export type SimklListEntry = {
   last_watched_at: string
   user_rating: number
   status: SimklListStatus
@@ -181,7 +180,7 @@ export interface SimklListEntry {
   }
 }
 
-interface SimklQuery {
+type SimklQuery = {
   extended?: 'full'
 }
 
@@ -191,9 +190,7 @@ type SimklResponse<D extends {} | null = any> =
 
 const BASE_URL = 'https://api.simkl.com'
 
-const responseIsError = (
-  res: SimklResponse<any>,
-): res is RequestError<null> => {
+const responseIsError = (res: SimklResponse): res is RequestError<null> => {
   return res.status > 400 || !res.ok
 }
 
@@ -211,9 +208,9 @@ export class Simkl {
 
     if (isNil(anime)) throw new Error('Could not find Anime on Simkl.')
 
-    const episodes = Array.from({ length: anime.total_episodes }).map(
-      (_, i) => ({ number: i + 1 }),
-    )
+    const episodes = Array.from({
+      length: anime.total_episodes,
+    }).map((_, i) => ({ number: i + 1 }))
 
     const watchedEpisodes = episodes.slice(0, progress)
     const notWatchedEpisodes = episodes.slice(progress)
@@ -256,8 +253,8 @@ export class Simkl {
     if (isNil(response.body)) return
 
     const updatedItems = [
-      ...oc(response.body).anime([]),
-      ...oc(response.body as any)['']([]),
+      ...(response.body?.anime ?? []),
+      ...((response.body as any)?.[''] ?? []),
     ]
 
     updatedItems.forEach(item => {
@@ -321,7 +318,7 @@ export class Simkl {
       )
     }
 
-    const simklId = oc(response).body[0].ids.simkl() || null
+    const simklId = response.body?.[0]?.ids?.simkl ?? null
 
     if (isNil(simklId)) return null
 
@@ -335,13 +332,13 @@ export class Simkl {
       )
     }
 
-    return fullResponse.body
+    return fullResponse.body as _ShowFull
   }
 
   public static async getRating(malId: number): Promise<number | null> {
     const info = await this.getAnimeInfo(malId)
 
-    return oc(info).ratings.simkl.rating() || null
+    return info?.ratings?.simkl?.rating ?? null
   }
 
   public static async getLink(malId: number) {
@@ -351,7 +348,7 @@ export class Simkl {
   public static async getAnidbID(malId: number) {
     const anime = await this.getAnimeInfo(malId)
 
-    const id = oc(anime).ids.anidb()
+    const id = anime?.ids.anidb
 
     if (isNil(id)) return null
 

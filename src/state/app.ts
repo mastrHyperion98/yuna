@@ -12,12 +12,12 @@ import {
   ListEntry as IListEntry,
   MediaListStatus,
   Provider,
-} from '@/graphql/types'
+} from '@/graphql/generated/types'
 import { router } from '@/router'
 import { RootState } from '@/state/store'
 import { generateId, isNil, pluck, propEq } from '@/utils'
 
-export interface Toast {
+export type Toast = {
   id: string
   title: string
   message: string
@@ -33,29 +33,29 @@ type AddToastMutationOptions = NotificationFunctionOptions<
   NotificationTypes
 > & { id: string; click?: (...a: any[]) => any }
 
-export interface ListEntry {
+export type ListEntry = {
   id: number
   status: MediaListStatus
   progress: number
 }
 
-export interface Sequel {
+export type Sequel = {
   id: number
   title: string
   bannerImage: string
 }
 
-export interface PlayerData {
+export type PlayerData = {
   id: number
   index: number
   provider: Provider
 }
 
-interface ModalBase {
+type ModalBase = {
   visible: boolean
 }
 
-export interface EditModalAnime {
+export type EditModalAnime = {
   animeId: number
   title: string
   bannerImage: string
@@ -63,18 +63,18 @@ export interface EditModalAnime {
   listEntry: Omit<IListEntry, '__typename' | 'mediaId' | 'media'>
 }
 
-export interface ManualSearchOptions {
+export type ManualSearchOptions = {
   provider: Provider
   anilistId: number | null
   selectedEpisodes: EpisodeListEpisodes[]
 }
 
-export interface LocalSourceOptions {
+export type LocalSourceOptions = {
   anilistId: number
 }
 
-export interface AppState {
-  isUpdateAvailable: boolean
+export type AppState = {
+  isUpdateAvailable: string | null
   toasts: Toast[]
   isFullscreen: boolean
   player: PlayerData | null
@@ -100,7 +100,7 @@ const initialModalBase: ModalBase = {
 }
 
 const initialState: AppState = {
-  isUpdateAvailable: false,
+  isUpdateAvailable: null,
   toasts: [],
   isFullscreen: false,
   player: null,
@@ -130,7 +130,7 @@ export const app = {
   state: { ...initialState },
 
   getters: {
-    getIsUpdateAvailable(state: AppState) {
+    getUpdateUrl(state: AppState) {
       return state.isUpdateAvailable
     },
 
@@ -149,14 +149,11 @@ export const app = {
         ([key, obj]) => [key, obj.visible] as [string, boolean],
       )
 
-      return entries.reduce(
-        (obj, [key, value]) => {
-          obj[key] = value
+      return entries.reduce((obj, [key, value]) => {
+        obj[key] = value
 
-          return obj
-        },
-        {} as any,
-      )
+        return obj
+      }, {} as any)
     },
 
     getEditingAnime(state: AppState) {
@@ -185,8 +182,8 @@ export const app = {
   },
 
   mutations: {
-    setIsUpdateAvailable(state: AppState, available: boolean) {
-      state.isUpdateAvailable = available
+    setIsUpdateAvailable(state: AppState, url: string | null) {
+      state.isUpdateAvailable = url
     },
 
     addToast(state: AppState, payload: AddToastMutationOptions) {
@@ -252,11 +249,13 @@ export const app = {
       }
     },
 
-    setLocalSourceAnime(state: AppState, animeId: number) {
-      state.modals.localSource.visible = true
-      state.modals.localSource.options = {
-        anilistId: animeId,
-      }
+    setLocalSourceAnime(state: AppState, animeId: number | null) {
+      state.modals.localSource.visible = !isNil(animeId)
+      state.modals.localSource.options = !animeId
+        ? null
+        : {
+            anilistId: animeId,
+          }
     },
 
     setFullscreen(state: AppState, b: boolean) {
@@ -324,7 +323,7 @@ export const app = {
       let lastEpNumber = 0
       const episodesWithFixedNumbers = remainingEpisodes.map(episode => {
         // TODO: implement fix for multiple episodes with same number
-        let realNum = lastEpNumber + 1
+        const realNum = lastEpNumber + 1
         lastEpNumber = realNum
 
         return {
@@ -435,7 +434,7 @@ export const app = {
 
 const { read, commit, dispatch } = getStoreAccessors<AppState, RootState>('app')
 
-export const getIsUpdateAvailable = read(app.getters.getIsUpdateAvailable)
+export const getUpdateUrl = read(app.getters.getUpdateUrl)
 export const getToasts = read(app.getters.getToasts)
 export const getPlayerData = read(app.getters.getPlayerData)
 export const getModalStates = read(app.getters.getModalStates)

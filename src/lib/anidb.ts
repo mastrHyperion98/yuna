@@ -7,12 +7,12 @@ import { Crunchyroll } from '@/lib/crunchyroll'
 import { ArmServer } from '@/lib/arm-server'
 import { delay, isNil, RequestResponse, responseIsError, T } from '@/utils'
 
-interface XmlTitle {
+type XmlTitle = {
   _: string
   lang: 'ja' | 'en' | 'x-jat'
 }
 
-interface XmlResource {
+type XmlResource = {
   type: number
   externalentity: {
     identifier: [number, string]
@@ -26,7 +26,7 @@ enum EpisodeType {
   OPENING_OR_ENDING,
 }
 
-interface XmlEpisode {
+type XmlEpisode = {
   id: number
   update: string
   epno: {
@@ -68,10 +68,10 @@ const getIdentifier = (ep: XmlEpisode) => {
     )
     if (correctType == null) return null
 
-    return correctType.externalentity.identifier[0]
+    return correctType.externalentity.identifier?.[0]
   }
 
-  return ep.resources.resource.externalentity.identifier[0]
+  return ep.resources.resource.externalentity.identifier?.[0]
 }
 
 const limiter = new Bottleneck({

@@ -6,9 +6,9 @@
       <div>Anime Folder</div>
 
       <c-button
+        v-tooltip="localFilesFolder"
         :icon="folderSvg"
         :content="localFilesFolder == null ? 'Select folder' : 'Change folder'"
-        v-tooltip="localFilesFolder"
         :click="setTemporaryLocalFilesFolder"
       />
     </section>
@@ -20,9 +20,9 @@
       <div class="container">
         <div class="vlc">
           <icon
+            v-tooltip="vlcPath"
             :icon="vlcSvg"
             :class="{ exists: vlcPath != null }"
-            v-tooltip="vlcPath"
             @click="setTemporaryVLCPath"
           />
           <div v-if="vlcPath != null">Found!</div>
@@ -45,7 +45,7 @@ import Checkbox from '@/common/components/form/checkbox.vue'
 import { VLC } from '@/lib/players/vlc'
 import { getSettings, setLocalFilesFolder, setVLCPath } from '@/state/settings'
 import { isNil } from '@/utils'
-import { getFilePath, getFolderPath } from '@/utils/paths'
+import { getFilePath, getFolderPath } from '@/utils/ffmpeg'
 
 @Component({ components: { Icon, CButton, Checkbox } })
 export default class Discord extends Vue {
@@ -58,8 +58,8 @@ export default class Discord extends Vue {
   public vlcPath =
     getSettings(this.$store).externalPlayers.vlc || VLC.getVLCPath()
 
-  public setTemporaryLocalFilesFolder() {
-    const path = getFolderPath({
+  public async setTemporaryLocalFilesFolder() {
+    const path = await getFolderPath({
       title: 'Set directory for Local Files',
     })
 
@@ -68,8 +68,8 @@ export default class Discord extends Vue {
     this.localFilesFolder = path
   }
 
-  public setTemporaryVLCPath() {
-    const path = getFilePath({
+  public async setTemporaryVLCPath() {
+    const path = await getFilePath({
       title: 'Set directory for Local Files',
       filters: [{ name: 'vlc', extensions: ['exe'] }],
     })

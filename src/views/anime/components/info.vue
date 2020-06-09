@@ -1,6 +1,7 @@
 <template>
   <div class="info-container">
     <list-link
+      title="AniList"
       :logo="alLogo"
       :loading="$apollo.loading"
       :link="alLink"
@@ -9,6 +10,7 @@
     />
 
     <list-link
+      title="MyAnimeList"
       :logo="malLogo"
       :loading="$apollo.loading"
       :link="malLink"
@@ -16,6 +18,7 @@
     />
 
     <list-link
+      title="Simkl"
       :logo="simklLogo"
       :loading="$apollo.loading"
       :link="simklInfo && simklInfo.linkSimkl"
@@ -25,7 +28,7 @@
     <div class="item">
       <next-episode-info
         v-if="nextAiringEpisode"
-        :nextAiringEpisode="nextAiringEpisode"
+        :next-airing-episode="nextAiringEpisode"
       />
     </div>
   </div>
@@ -46,7 +49,7 @@ import {
   MalScoreQueryVariables,
   SimklInfoQuery,
   SimklInfoQueryVariables,
-} from '@/graphql/types'
+} from '@/graphql/generated/types'
 
 import ListLink from '@/views/anime/components/list-link.vue'
 import NextEpisodeInfo from '@/common/components/next-episode-info.vue'

@@ -3,23 +3,18 @@
     <episode-feed />
 
     <div class="main">
-      <patreon />
-
       <changelog />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
-
-import CButton from '@/common/components/button.vue'
 import EpisodeFeed from './components/episode-feed.vue'
-import Patreon from './components/patreon.vue'
 import Changelog from './components/changelog.vue'
 
-@Component({ components: { Patreon, EpisodeFeed, Changelog, CButton } })
-export default class Dashboard extends Vue {}
+export default {
+  components: { EpisodeFeed, Changelog },
+}
 </script>
 
 <style scoped lang="scss">

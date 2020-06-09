@@ -1,8 +1,8 @@
-import electron from 'electron'
+import { session } from 'electron'
 import { api } from 'electron-util'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { Response } from 'superagent'
-import uuid from 'uuid/v4'
+import { v4 as uuid } from 'uuid'
 import { resolve } from 'path'
 import {
   mdiCheckboxMarked,
@@ -23,34 +23,25 @@ import {
   MediaRelation,
   PlayerAnimeQuery,
   Provider,
-} from '@/graphql/types'
+} from '@/graphql/generated/types'
 import { StreamingSource } from '@/types'
-import Filter = Electron.Filter
+import CookiesGetFilter = Electron.CookiesGetFilter
 
 export const NO_OP = () => {
   /* no-op */
 }
 
-export enum LocalStorageKey {
-  QUALITY = 'quality_v2',
-  VOLUME = 'volume',
-  MUTED = 'muted',
-  SPEED = 'speed',
-  SUBTITLE = 'subtitle',
-  LIST_OPEN = 'list_open',
-}
-
-export interface RequestSuccess<B extends {} | null> extends Response {
+export type RequestSuccess<B extends {} | null> = {
   status: 200 | 204
   ok: true
   body: B
-}
+} & Response
 
-export interface RequestError<B extends object | null> extends Response {
+export type RequestError<B extends object | null> = {
   status: 200 | 400 | 401 | 404 | 500 | 502 | 429
   ok: false
   body: B
-}
+} & Response
 
 export type RequestResponse<D extends object = any, E extends object = any> =
   | RequestSuccess<D>
@@ -73,7 +64,7 @@ export const secondsToTimeString = (input: number) => {
   return `${add0ToNumber(minutes)}:${add0ToNumber(seconds)}`
 }
 
-interface MediaListEntry {
+type MediaListEntry = {
   status: MediaListStatus | null
   progress: number | null
 }
@@ -183,7 +174,6 @@ export const isOfTypename = <T extends { __typename?: string }>(
   typename: T['__typename'],
 ): obj is T => obj.__typename === typename
 
-// eslint-disable-next-line array-type
 export const arrayIsOfType = <T>(
   arr: any[],
   ...properties: Array<keyof T>
@@ -193,28 +183,25 @@ export const arrayIsOfType = <T>(
 export const getEpisodeCacheKey = (ep: EpisodeListEpisodes) =>
   `Episode:${ep.provider}:${ep.id}`
 
-// eslint-disable-next-line no-shadowed-variable
-export const removeCookies = (filter: Filter) => {
-  if (!electron.remote.session.defaultSession) {
+export const removeCookies = async (filter: CookiesGetFilter) => {
+  if (isNil(session)) return
+
+  if (!session.defaultSession) {
     // eslint-disable-next-line no-console
     return console.warn(
       `Could not get default session when deleting cookie.\n${filter}`,
     )
   }
 
-  const { cookies } = electron.remote.session.defaultSession
+  const cookies = await session.defaultSession.cookies.get(filter)
 
-  cookies.get(filter, (err, cooks) => {
-    if (err) throw new Error(err.message)
+  cookies.forEach(cookie => {
+    if (!cookie.domain) return
 
-    cooks.forEach(cookie => {
-      if (!cookie.domain) return
+    const prefix = cookie.domain.includes('crunchyroll') ? 'api.' : ''
+    const url = 'https://' + prefix + cookie.domain.replace(/^\./, '')
 
-      const prefix = cookie.domain.includes('crunchyroll') ? 'api.' : ''
-      const url = 'https://' + prefix + cookie.domain.replace(/^\./, '')
-
-      cookies.remove(url, cookie.name, NO_OP)
-    })
+    session.defaultSession.cookies.remove(url, cookie.name)
   })
 }
 
@@ -233,7 +220,7 @@ export const getRelations = (
   return filtered.map(relation => relation?.node)
 }
 
-interface ExternalLink {
+type ExternalLink = {
   site: string
   url?: string
 }
@@ -312,7 +299,7 @@ export const complement = (fn: (...a: any[]) => any) => (input: any) =>
 
 export const mapAsync = async <T, R>(
   items: T[],
-  fn: (item: T) => Promise<R>,
+  fn: (item: T, index: number) => Promise<R>,
 ) => {
   const promises = items.map(fn)
 
@@ -357,10 +344,10 @@ export const debounce = <P extends Array<any>>(
   let timeout: number | NodeJS.Timeout | null = null
 
   return (...input: P) => {
-    const later = function() {
+    const later = function () {
       timeout = null
       if (!immediate) {
-        func.apply(null, input)
+        func(...input)
       }
     }
 
@@ -369,7 +356,7 @@ export const debounce = <P extends Array<any>>(
 
     const callNow = immediate && !timeout
     if (callNow) {
-      func.apply(null, input)
+      func(...input)
     }
   }
 }

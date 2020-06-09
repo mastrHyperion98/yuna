@@ -21,8 +21,8 @@
       <keep-alive>
         <transition-group
           v-if="list.length > 0 && open"
-          tag="div"
           key="EntryContainer"
+          tag="div"
           class="entry-container"
           :class="classes"
           @wheel.native="handleScroll"
@@ -46,7 +46,7 @@ import { mdiChevronDown } from '@mdi/js'
 
 import Icon from '@/common/components/icon.vue'
 import { Required } from '@/decorators'
-import { ListViewListEntries, MediaListStatus } from '@/graphql/types'
+import { ListViewListEntries, MediaListStatus } from '@/graphql/generated/types'
 import { clamp, humanizeMediaListStatus } from '@/utils'
 import { ListMedia } from '../types'
 import ListEntry from './list-entry.vue'

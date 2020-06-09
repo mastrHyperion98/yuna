@@ -2,10 +2,9 @@ import { format } from 'date-fns'
 import crypto from 'crypto'
 // import { captureException } from '@sentry/browser'
 import superagent from 'superagent/dist/superagent'
-import { oc } from 'ts-optchain'
 import { ActionContext, Store } from 'vuex'
 
-import { EpisodeListEpisodes, Provider } from '@/graphql/types'
+import { EpisodeListEpisodes, Provider } from '@/graphql/generated/types'
 import { getConfig } from '@/config'
 import { userStore } from '@/lib/user'
 import { getHidiveLogin, getIsConnectedTo, setHidive } from '@/state/auth'
@@ -65,7 +64,7 @@ enum _Locale {
   Italian = 'ita',
 }
 
-export interface HidiveProfile {
+export type HidiveProfile = {
   AvatarJPGUrl: string
   AvatarPNGUrl: string
   Id: number
@@ -74,7 +73,7 @@ export interface HidiveProfile {
   Primary: boolean
 }
 
-interface _Title {
+type _Title = {
   ContinueWatching: {
     CreatedDT: string
     CurrentTime: number
@@ -114,7 +113,7 @@ interface _Title {
   UserRating: number
 }
 
-interface _Episode {
+type _Episode = {
   DisplayNameLong: string
   EpisodeNumberValue: number
   HIDIVEPremiereDate: string
@@ -131,7 +130,7 @@ interface _Episode {
   VideoKey: string
 }
 
-interface _Stream {
+type _Stream = {
   AdUrl: null
   AutoPlayNextEpisode: boolean
   CaptionCssUrl: string
@@ -157,12 +156,12 @@ interface _Stream {
   }
 }
 
-interface InitDeviceBody {
+type InitDeviceBody = {
   DeviceId: string
   VisitId: string
 }
 
-interface AuthenticateBody {
+type AuthenticateBody = {
   Profiles: HidiveProfile[]
   User: {
     CountryCode: string | null
@@ -174,11 +173,11 @@ interface AuthenticateBody {
   }
 }
 
-interface GetTitleBody {
+type GetTitleBody = {
   Title: _Title
 }
 
-interface ReqResponse {
+type ReqResponse = {
   Code: number
   Data: any
   IPAddress: string
@@ -188,19 +187,19 @@ interface ReqResponse {
   Timestamp: string
 }
 
-interface HidiveSuccess<D extends object = any> extends ReqResponse {
+type HidiveSuccess<D extends object = any> = {
   Code: 0
   Data: D
   IPAddress: string
   Message: null
   Messages: {}
   Status: 'Success'
-}
+} & ReqResponse
 
-interface HidiveError extends ReqResponse {
+type HidiveError = {
   Data: any
   Status: 'InvalidNonce' | string
-}
+} & ReqResponse
 
 type HidiveResponse<D extends object = any> =
   | RequestSuccess<HidiveSuccess<D>>
@@ -312,7 +311,7 @@ export class Hidive {
       return null
     }
 
-    const title = response.body.Data.Title
+    const title = response.body.Data.Title as GetTitleBody['Title']
 
     return title.Episodes.map<Omit<EpisodeListEpisodes, 'isWatched'>>(
       (ep, index) => ({
@@ -347,7 +346,7 @@ export class Hidive {
       return null
     }
 
-    const { Data } = response.body
+    const Data = response.body.Data as _Stream
     const videoUrls = Data.VideoUrls
     const japaneseSubbedKey = Object.keys(videoUrls).find(str =>
       str.includes('Japanese'),
@@ -392,13 +391,13 @@ export class Hidive {
   private static async authenticate(
     options: { store: StoreType } | { user: string; password: string },
   ) {
-    let user = ''
-    let password = ''
+    let user: string
+    let password: string
 
     if (isOfType<{ store: StoreType }>(options, 'store')) {
       const login = getHidiveLogin(options.store)
-      user = oc(login).user('')
-      password = oc(login).password('')
+      user = login?.user ?? ''
+      password = login?.password ?? ''
     } else {
       user = options.user
       password = options.password
@@ -429,10 +428,7 @@ export class Hidive {
 
     const nonce = date + TOKEN
 
-    const hashedNonce = crypto
-      .createHash('sha256')
-      .update(nonce)
-      .digest('hex')
+    const hashedNonce = crypto.createHash('sha256').update(nonce).digest('hex')
 
     return hashedNonce
   }
@@ -449,10 +445,7 @@ export class Hidive {
       nonce +
       TOKEN
 
-    return crypto
-      .createHash('sha256')
-      .update(sigCleanStr)
-      .digest('hex')
+    return crypto.createHash('sha256').update(sigCleanStr).digest('hex')
   }
 
   private static convertName(name: string) {

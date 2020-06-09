@@ -11,7 +11,7 @@ import {
   ListViewQuery,
   ListViewQueryVariables,
   Provider,
-} from '@/graphql/types'
+} from '@/graphql/generated/types'
 
 import { EpisodeCache } from '@/lib/episode-cache'
 import { EpisodeRelations } from '@/lib/relations'
@@ -73,7 +73,7 @@ export const getCachedAnimeIdMal = (
   return data?.idMal ?? null
 }
 
-interface CachedExternalLinks {
+type CachedExternalLinks = {
   externalLinks: Array<{ site: string; url: string }>
 }
 
@@ -151,7 +151,7 @@ export const cacheEpisodes = (
   }
 
   const { animeId, provider } = episodes[0]
-  let nextEpisodeAiringAt = getNextEpisodeAiringAt(cache, animeId)
+  const nextEpisodeAiringAt = getNextEpisodeAiringAt(cache, animeId)
 
   cache.writeQuery<EpisodeListQuery, EpisodeListVariables>({
     query: EPISODE_LIST,
@@ -171,7 +171,7 @@ export const cacheRelations = (
   })
 }
 
-export interface EpisodeMutationObject {
+export type EpisodeMutationObject = {
   animeId: number
   provider: Provider
   episodeNumber: number

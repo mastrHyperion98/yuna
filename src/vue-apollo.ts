@@ -12,9 +12,9 @@ import {
 import Bottleneck from 'bottleneck'
 import { captureException } from '@sentry/browser'
 
-import introspectionResult from '@/graphql/introspection-result'
+import introspectionResult from '@/graphql/generated/introspection-result'
 import { resolvers } from '@/graphql/resolvers'
-import { EpisodeListEpisodes, ListEntry } from '@/graphql/types'
+import { EpisodeListEpisodes, ListEntry } from '@/graphql/generated/types'
 import { userStore } from '@/lib/user'
 import { getEpisodeCacheKey, isNil, isOfTypename } from '@/utils'
 import {
@@ -115,7 +115,7 @@ export const createProvider = (store: Store<any>) => {
         fetchPolicy: 'cache-first',
       },
     },
-    async errorHandler({ networkError, message }) {
+    async errorHandler({ networkError }) {
       if (!isNil(networkError) && (networkError as any)?.statusCode === 429) {
         const currentReservoir = (await limiter.currentReservoir()) || 60
         await limiter.incrementReservoir(-currentReservoir)
@@ -127,15 +127,11 @@ export const createProvider = (store: Store<any>) => {
       if (process.env.NODE_ENV === 'production') {
         if (isNil(networkError)) return
 
-        captureException(networkError)
+        return captureException(networkError)
       }
 
       // eslint-disable-next-line no-console
-      console.log(
-        '%cError',
-        'background: red; color: white; padding: 2px 4px; border-radius: 3px; font-weight: bold;',
-        message,
-      )
+      console.error(networkError)
     },
   })
 

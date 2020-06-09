@@ -19,12 +19,22 @@
     <img src="https://img.shields.io/david/beeequeue/yuna.svg"/>
   </a>
 
-  <a href="https://travis-ci.org/BeeeQueue/yuna">
-    <img src="https://travis-ci.org/BeeeQueue/yuna.svg?branch=master"/>
-  </a>
-
   <a href="https://github.com/prettier/prettier">
     <img src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg"/>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/BeeeQueue/yuna/actions?query=workflow%3A%22Build+%26+Publish%22+branch%3Amaster">
+    <img src="https://img.shields.io/github/workflow/status/BeeeQueue/yuna/Build & Publish?label=build"/>
+  </a>
+  
+  <a href="https://github.com/BeeeQueue/yuna/actions?query=workflow%3A%22Test%22+branch%3Amaster">
+    <img src="https://img.shields.io/github/workflow/status/BeeeQueue/yuna/Test?label=tests"/>
+  </a>
+  
+  <a href="https://github.com/BeeeQueue/yuna/actions?query=workflow%3A%22Lint%22+branch%3Amaster">
+    <img src="https://img.shields.io/github/workflow/status/BeeeQueue/yuna/Lint?label=lint"/>
   </a>
 </p>
 
@@ -32,10 +42,13 @@
   <a href="https://yuna.moe" target="_blank">Website</a>
 </h4>
 <h4 align="center">
+  <a href="https://github.com/BeeeQueue/yuna/tree/master/docs" target="_blank">Help</a>
+</h4>
+<h4 align="center">
   <a href="https://github.com/BeeeQueue/yuna/projects" target="_blank">Roadmap</a>
 </h4>
 <h4 align="center">
-  <a href="https://github.com/BeeeQueue/yuna/releases" target="_blank">Download</a>
+  <a href="https://github.com/BeeeQueue/yuna/releases" target="_blank">Download / Changelog</a>
 </h4>
 
 <p align="center">
